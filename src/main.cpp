@@ -27,6 +27,12 @@ bool inflating = false;
 // Waveguide reading at rest, used as the reference for optical loss
 double waveguideBaseline = 0;
 
+// Serial output
+const unsigned long PRINT_INTERVAL_MS = 200;  // 5 rows per second
+const unsigned long HEADER_EVERY = 20;        // Rows between repeated headers
+unsigned long lastPrintMs = 0;
+unsigned long rowCount = 0;
+
 float readForce() {
   int fsrADC = analogRead(FSR_PIN);
 
@@ -48,6 +54,21 @@ float readForce() {
   }
 
   return conductance / 0.000000642857f;
+}
+
+// Print a number right-aligned in a column of the given width.
+void printValue(float value, int width, int decimals) {
+  char buf[16];
+  dtostrf(value, width, decimals, buf);
+  Serial.print(buf);
+}
+
+// Print text right-aligned in a column of the given width.
+void printText(const char *text, int width) {
+  for (int i = strlen(text); i < width; i++) {
+    Serial.print(' ');
+  }
+  Serial.print(text);
 }
 
 void setup() {
@@ -98,23 +119,39 @@ void loop() {
     inflating = false;
   }
 
-  float pressure_hPa = mpr.readPressure();
+  // Print at a fixed rate; the pump control above still runs every loop.
+  unsigned long now = millis();
+  if (now - lastPrintMs < PRINT_INTERVAL_MS) {
+    return;
+  }
+  lastPrintMs = now;
+
+  float pressure_psi = mpr.readPressure() / 68.9476f;  // Absolute PSI
 
   int waveguideADC = analogRead(WAVEGUIDE_PIN);
   float waveguideVoltage = waveguideADC * (5.0f / 1023.0f);
-  double loss = 10 * log10(waveguideBaseline / waveguideADC);  // Optical loss in dB
+
+  // Loss is undefined when either reading is zero.
+  bool lossValid = waveguideADC > 0 && waveguideBaseline > 0;
+  double loss = lossValid ? 10 * log10(waveguideBaseline / waveguideADC) : 0;  // Optical loss in dB
 
   // double angle = 3.1412 * sq(loss) + 84.948 * loss + 1.1066;  // Calibration: angle vs loss
   // if (angle < 0) angle = 0;
 
-  Serial.print("Force (estimated g): ");
-  Serial.print(forceVal, 0);
-  Serial.print(" | Pump command: ");
-  Serial.print(inflating ? "ON" : "OFF");
-  Serial.print(" | Pressure (absolute PSI): ");
-  Serial.print(pressure_hPa / 68.9476f, 2);
-  Serial.print(" | Loss (dB): ");
-  Serial.print(loss, 2);
-  Serial.print(" | Waveguide voltage (V): ");
-  Serial.println(waveguideVoltage, 2);
+  if (rowCount % HEADER_EVERY == 0) {
+    Serial.println();
+    Serial.println(" Force(g)  Pump  Press(psi)  Loss(dB)  Wave(V)");
+  }
+  rowCount++;
+
+  printValue(forceVal, 9, 0);
+  printText(inflating ? "ON" : "OFF", 6);
+  printValue(pressure_psi, 12, 2);
+  if (lossValid) {
+    printValue(loss, 10, 2);
+  } else {
+    printText("--", 10);
+  }
+  printValue(waveguideVoltage, 9, 2);
+  Serial.println();
 }
