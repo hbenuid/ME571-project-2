@@ -11,6 +11,7 @@
       --danger: #ff7d84; --bg: #081719;
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
     .app { display: grid; grid-template-columns: 276px 1fr; min-height: 100vh; }
     aside { padding: 28px 20px; background: #0c2022; border-right: 1px solid var(--edge); }
@@ -26,12 +27,22 @@
     .session-row { display: flex; justify-content: space-between; margin: 9px 0; color: var(--muted); font-size: 12px; }
     .session-row b { color: var(--ink); font-weight: 600; }
     main { padding: 28px 34px 40px; max-width: 1540px; width: 100%; min-width: 0; margin: auto; }
-    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 26px; }
+    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 22px; }
     h1 { margin: 0 0 5px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.03em; }
     .subtitle { color: var(--muted); }
     .status { display: flex; align-items: center; gap: 8px; color: var(--teal); border: 1px solid #28665e; border-radius: 999px; padding: 8px 13px; font-size: 12px; background: #102a2a; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 11px var(--teal); }
     .dot.off { background: var(--danger); box-shadow: none; }
+    .mode-bar { display: flex; gap: 14px; align-items: stretch; justify-content: space-between; margin-bottom: 18px; }
+    .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; flex: 1; max-width: 760px; padding: 5px; border: 1px solid var(--edge); border-radius: 12px; background: #0c2022; }
+    .mode-tab { padding: 10px 14px; text-align: left; color: var(--muted); background: transparent; font-weight: 500; border-radius: 8px; }
+    .mode-tab b { display: block; color: var(--ink); font-size: 14px; font-weight: 700; }
+    .mode-tab small { display: block; font-size: 11px; }
+    .mode-tab[aria-pressed="true"] { background: #1d4246; box-shadow: inset 0 0 0 1px #3c7f78; }
+    .mode-tab[aria-pressed="true"] b { color: var(--teal); }
+    .actuator { min-width: 220px; padding: 10px 16px; border: 1px solid var(--edge); border-radius: 12px; background: #0c2022; }
+    .actuator small { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    .actuator b { display: block; margin-top: 3px; color: var(--amber); font-size: 16px; }
     .layout { display: grid; grid-template-columns: minmax(380px, 1.08fr) minmax(390px, .92fr); gap: 18px; }
     .panel { border: 1px solid var(--edge); border-radius: 13px; background: linear-gradient(145deg, #132b2e, #102326); overflow: hidden; }
     .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid #214345; }
@@ -40,6 +51,18 @@
     .finger-stage { height: 442px; position: relative; overflow: hidden; background: radial-gradient(circle at 42% 52%, #20484a 0, #122d30 35%, #102326 74%); }
     .finger-stage:after { content: ""; position: absolute; inset: auto 0 0; height: 70px; background: linear-gradient(transparent, #0d2022); pointer-events: none; }
     #finger { width: 100%; height: 100%; }
+    .game-layer { position: absolute; inset: 0; }
+    #game { display: block; width: 100%; height: 100%; }
+    .finger-stage:not(.game-on) .game-layer, .finger-stage.game-on #finger, .finger-stage.game-on .stage-legend, .finger-stage.game-on:after { display: none; }
+    /* In the game the readouts sit in a strip along the bottom, below the ship's range. */
+    .game-hud { position: absolute; right: 16px; bottom: 12px; display: flex; gap: 8px; }
+    .game-hud span, .finger-stage.game-on .angle-badge { display: flex; gap: 8px; align-items: baseline; padding: 6px 12px; border-radius: 10px; background: #0b1c1ee8; border: 1px solid #2f6260; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    .game-hud b { color: var(--amber); font-size: 18px; letter-spacing: 0; line-height: 1.1; }
+    .finger-stage.game-on .angle-badge { top: auto; left: 16px; bottom: 12px; }
+    .finger-stage.game-on .angle-badge strong { font-size: 18px; letter-spacing: 0; }
+    .game-overlay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100% - 40px)); padding: 18px 20px; text-align: center; border-radius: 12px; background: #0b1c1ef0; border: 1px solid #2f6260; }
+    .game-overlay strong { display: block; margin-bottom: 6px; font-size: 20px; }
+    .game-overlay span { color: var(--muted); font-size: 13px; }
     .angle-badge { position: absolute; left: 20px; top: 20px; padding: 11px 14px; border-radius: 10px; background: #0b1c1ee8; border: 1px solid #2f6260; }
     .angle-badge small { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
     .angle-badge strong { display: block; color: var(--teal); font-size: 27px; line-height: 1.1; }
@@ -63,26 +86,32 @@
     .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 20px 20px; }
     .control-group { padding: 14px; border-radius: 9px; background: #102528; border: 1px solid #24494b; }
     .control-group.full { grid-column: 1/-1; }
-    input[type=range] { width: 100%; accent-color: var(--teal); margin: 14px 0 5px; }
+    .mode-panel { border-color: #3c7f78; }
     input[type=number], input[type=text], select { width: 100%; padding: 10px; color: var(--ink); background: #0b1d20; border: 1px solid #2b5556; border-radius: 6px; outline: none; }
     input:focus, select:focus { border-color: var(--teal); }
-    .control-title { display: flex; justify-content: space-between; align-items: center; }
-    .control-title b { color: var(--teal); font-size: 16px; }
+    input:disabled { opacity: .6; }
+    .control-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .control-title b { color: var(--teal); font-size: 14px; text-align: right; }
     .calibration { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-top: 10px; }
-    .calibration label { letter-spacing: .03em; font-size: 10px; }
-    .calibration input { margin-top: 5px; }
+    .timings { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 9px; margin-top: 10px; }
+    .calibration label, .timings label, .source-row label { letter-spacing: .03em; font-size: 10px; }
+    .calibration input, .timings input, .source-row input { margin-top: 5px; }
+    .progress { height: 6px; margin-top: 12px; overflow: hidden; border-radius: 3px; background: #0b1d20; }
+    .progress i { display: block; width: 0; height: 100%; background: var(--teal); }
+    .lead { margin: 10px 0 0; font-size: 13px; }
+    kbd { padding: 1px 6px; border: 1px solid #3c6f6c; border-bottom-width: 2px; border-radius: 4px; background: #0b1d20; color: var(--ink); font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
     button { border: 0; border-radius: 7px; padding: 10px 14px; cursor: pointer; color: #06201d; background: var(--teal); font-weight: 700; }
     button.secondary { color: var(--ink); background: #214448; }
     button.secondary.active { color: #06201d; background: var(--teal); }
     button:hover { filter: brightness(1.12); }
-    .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+    .hold-btn { min-width: 130px; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
     .button-row .hint { margin: 0; }
-    .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 9px; }
-    button:disabled { opacity: .6; cursor: default; }
+    .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 9px; align-items: end; }
+    button:disabled { opacity: .6; cursor: default; filter: none; }
     .hint { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
     code { color: #a7e6dc; background: #0b1d20; padding: 2px 4px; border-radius: 3px; }
     .hint a { color: var(--teal); }
-    [hidden] { display: none !important; }
     .view-tabs { display: none; gap: 6px; margin-bottom: 18px; }
     .view-tabs a { flex: 1; padding: 9px 12px; border: 1px solid var(--edge); border-radius: 8px; color: var(--muted); text-align: center; text-decoration: none; }
     .view-tabs a.active { color: var(--ink); background: #183638; }
@@ -140,8 +169,9 @@
     button.icon:hover { color: var(--danger); }
     pre.snippet { margin: 0; padding: 14px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: #a7e6dc; background: #0b1d20; border: 1px solid #24494b; border-radius: 8px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     @media (max-width: 1100px) { .cal-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "capture" "fit" "points" "code"; } }
-    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 14px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } .view-tabs { display: flex; } }
-    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } .live-row, .stats { grid-template-columns: 1fr 1fr; } .capture-row, .fit-options { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 16px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } .view-tabs { display: flex; } }
+    @media (max-width: 720px) { .mode-bar { flex-direction: column; } .mode-tabs { max-width: none; } }
+    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } .mode-tab { padding: 9px 10px; } .mode-tab small { display: none; } .finger-stage { height: 360px; } .live-row, .stats { grid-template-columns: 1fr 1fr; } .capture-row, .fit-options { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -152,7 +182,7 @@
       <span class="side-label">Session</span>
       <div class="session">
         <div class="session-row"><span>Patient</span><b>Demo patient</b></div>
-        <div class="session-row"><span>Exercise</span><b>Finger flexion</b></div>
+        <div class="session-row"><span>Exercise</span><b id="exerciseName">Automatic cycle</b></div>
         <div class="session-row"><span>Duration</span><b id="duration">00:00</b></div>
       </div>
     </aside>
@@ -160,12 +190,20 @@
       <nav class="view-tabs" aria-label="Views"><a href="#overview">Live session</a><a href="#calibration">Calibration</a></nav>
       <header id="overview">
         <div><h1 id="viewTitle">Live session</h1><div class="subtitle" id="viewSubtitle">Optical finger-sleeve feedback for guided rehab exercises</div></div>
-        <div class="status" id="status"><i class="dot"></i><span>Simulation active</span></div>
+        <div class="status" id="status"><i class="dot"></i><span>Simulator</span></div>
       </header>
+      <section class="mode-bar" id="modeBar" aria-label="Exercise mode">
+        <div class="mode-tabs" role="group" aria-label="Exercise mode">
+          <button class="mode-tab" type="button" data-mode="auto" aria-pressed="true"><b>Automatic</b><small>Timed bend and release</small></button>
+          <button class="mode-tab" type="button" data-mode="manual" aria-pressed="false"><b>Manual</b><small>Arrow keys move the finger</small></button>
+          <button class="mode-tab" type="button" data-mode="game" aria-pressed="false"><b>Game</b><small>Steer a ship with your finger</small></button>
+        </div>
+        <div class="actuator"><small>Actuator · <span id="actuatorSource">simulated</span></small><b id="actuatorText">Vented</b></div>
+      </section>
       <section class="layout" id="liveView">
         <section class="panel">
-          <div class="panel-head"><h2>Articulated finger</h2><span>Right index · calibrated</span></div>
-          <div class="finger-stage">
+          <div class="panel-head"><h2 id="stageTitle">Articulated finger</h2><span id="stageNote">Right index · calibrated</span></div>
+          <div class="finger-stage" id="stage">
             <svg id="finger" viewBox="0 0 700 420" role="img" aria-label="Animated virtual finger showing bend angle">
               <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
               <path d="M92 220 C180 203 255 211 330 221" stroke="#547c79" stroke-width="28" stroke-linecap="round" opacity=".3"/>
@@ -179,37 +217,58 @@
               <text id="arcLabel" fill="#d9f4f0" font-size="13" font-weight="700"></text>
               <text x="54" y="196" fill="#8eaaa8" font-size="12">wrist</text><text x="553" y="215" fill="#8eaaa8" font-size="12">fingertip</text>
             </svg>
-            <div class="angle-badge"><small>Live bend angle</small><strong><span id="angleReadout">42</span>°</strong></div>
+            <div class="game-layer">
+              <canvas id="game" aria-label="Spaceship game. The ship's height follows the finger's bend angle."></canvas>
+              <div class="game-hud"><span>Score<b id="scoreText">0</b></span><span>Best<b id="bestText">0</b></span></div>
+              <div class="game-overlay" id="gameOverlay"><strong id="overlayTitle">Spaceship game</strong><span id="overlayText"></span></div>
+            </div>
+            <div class="angle-badge"><small id="angleLabel">Live bend angle</small><strong><span id="angleReadout">0</span>°</strong></div>
             <div class="stage-legend"><span><i class="legend-line"></i> optical sleeve signal</span><span><i class="legend-dash"></i> neutral alignment</span></div>
           </div>
           <div class="metrics">
-            <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">2.84</span> <small>dB</small></div></div>
-            <div class="metric"><div class="metric-label">Bending angle</div><div class="metric-value"><span id="metricAngle">42</span> <small>deg</small></div></div>
-            <div class="metric"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">8.6</span> <small>PSI</small></div></div>
+            <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">0.00</span> <small>dB</small></div></div>
+            <div class="metric"><div class="metric-label">Bending angle</div><div class="metric-value"><span id="metricAngle">0</span> <small>deg</small></div></div>
+            <div class="metric"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">0.0</span> <small>PSI</small></div></div>
           </div>
         </section>
         <section class="panel" id="hardware">
-          <div class="panel-head"><h2>Hardware input</h2><span id="inputMode">Manual simulator</span></div>
+          <div class="panel-head"><h2>Controls</h2><span id="inputMode">Simulator</span></div>
           <div class="controls">
-            <div class="control-group full">
-              <div class="control-title"><label for="angleSlider">Bending angle</label><b><span id="sliderValue">42</span>°</b></div>
-              <input id="angleSlider" type="range" min="0" max="120" value="42">
-              <div class="button-row"><button id="simulateBtn">Pause simulation</button><button class="secondary" id="neutralBtn">Set neutral</button></div>
+            <div class="control-group full mode-panel" data-panel="auto">
+              <div class="control-title"><label>Automatic cycle</label><b id="autoStatus">Ready</b></div>
+              <div class="timings">
+                <label>Inflate (s)<input id="autoInflate" type="number" min="0.5" max="60" step="0.5" value="3"></label>
+                <label>Hold (s)<input id="autoHold" type="number" min="0" max="60" step="0.5" value="2"></label>
+                <label>Vent (s)<input id="autoVent" type="number" min="0.5" max="60" step="0.5" value="3"></label>
+                <label>Rest (s)<input id="autoRest" type="number" min="0" max="60" step="0.5" value="2"></label>
+                <label>Reps<input id="autoReps" type="number" min="1" max="100" step="1" value="10"></label>
+              </div>
+              <div class="progress" aria-hidden="true"><i id="autoProgress"></i></div>
+              <div class="button-row"><button id="autoStartBtn" type="button">Start</button><button class="secondary" id="autoStopBtn" type="button" disabled>Stop and vent</button></div>
+              <p class="hint">Each rep inflates, holds, vents and rests for these times. Inflation still stops at the pressure limit in <code>src/main.cpp</code>. Pressing the FSR vents straight away and ends the cycle.</p>
             </div>
-            <div class="control-group"><label for="pressureInput">Bladder pressure (PSI)</label><input id="pressureInput" type="number" min="0" max="30" step=".1" value="8.6"></div>
-            <div class="control-group"><label for="lossInput">Measured optical loss (dB)</label><input id="lossInput" type="number" min="0" max="30" step=".01" value="2.84"></div>
-            <div class="control-group full"><label>Simulator loss model</label>
+            <div class="control-group full mode-panel" data-panel="manual" hidden>
+              <div class="control-title"><label>Manual control</label><b id="manualStatus">No key held</b></div>
+              <p class="lead">Hold <kbd>↑</kbd> to bend the finger and <kbd>↓</kbd> to straighten it. Let go to hold the position.</p>
+              <div class="button-row"><button class="secondary hold-btn" id="bendBtn" type="button">▲ Bend</button><button class="secondary hold-btn" id="straightenBtn" type="button">▼ Straighten</button></div>
+              <p class="hint">The buttons work the same way: press and hold. Bend runs the pump and Straighten opens the exhaust. Inflation stops at the pressure limit in <code>src/main.cpp</code>, and pressing the FSR vents straight away.</p>
+            </div>
+            <div class="control-group full mode-panel" data-panel="game" hidden>
+              <div class="control-title"><label>Spaceship game</label><b id="gameStatus">Ready</b></div>
+              <p class="lead">Bend your finger to fly up and straighten it to fly down. Dodge the asteroids.</p>
+              <div class="source-row"><label>Top of screen at (deg)<input id="gameTopAngle" type="number" min="10" max="120" step="5" value="90"></label><button id="gameStartBtn" type="button">Start game</button></div>
+              <p class="hint">The bladder stays vented, so the finger moves under its own effort. <kbd>Space</kbd> also starts the game. Without an Arduino, hold <kbd>↑</kbd> and <kbd>↓</kbd> to move the simulated finger.</p>
+            </div>
+            <div class="control-group full"><label>Simulator model</label>
               <div class="calibration"><label>Baseline loss (dB)<input id="baseInput" type="number" step=".01" value="0.50"></label><label>Sensitivity (dB/deg)<input id="sensitivityInput" type="number" step=".001" value=".055"></label><label>Neutral angle (deg)<input id="neutralInput" type="number" step="1" value="0"></label></div>
-              <p class="hint">The simulator generates loss as <code>L = L₀ + k (θ − θ₀)</code>. When the Arduino is connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead. Make that fit on the <a href="#calibration">Calibration</a> page.</p>
+              <p class="hint">Without an Arduino, a simulated bladder answers the same commands as the real one. It fills at 0.8 psi/s up to 3 psi and bends the finger 30° per psi, and its loss is <code>L = L₀ + k (θ − θ₀)</code>. With the Arduino connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead. Make that fit on the <a href="#calibration">Calibration</a> page.</p>
             </div>
             <div class="control-group full"><label for="connectBtn">Arduino over USB</label>
-              <div class="button-row"><button class="connect-btn" id="connectBtn">Connect to Arduino</button><span class="hint serial-status"></span></div>
-              <p class="hint">Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight.</p>
-              <div class="button-row"><button class="secondary" data-command="I" disabled>Inflate</button><button class="secondary" data-command="H" disabled>Hold</button><button class="secondary" data-command="V" disabled>Vent</button><span class="hint control-mode"></span></div>
-              <p class="hint">Inflate runs the pump until you press Hold or Vent, or until the pressure limit set in <code>src/main.cpp</code>. Pressing the FSR vents straight away. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
+              <div class="button-row"><button class="connect-btn" id="connectBtn" type="button">Connect to Arduino</button><span class="hint serial-status"></span></div>
+              <p class="hint">Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
             </div>
             <div class="control-group full"><label for="trialInput">Recording</label>
-              <div class="source-row"><input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3, 50% grip"><button id="downloadBtn" disabled>Download CSV</button></div>
+              <div class="source-row"><input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3, 50% grip"><button id="downloadBtn" type="button" disabled>Download CSV</button></div>
               <p class="hint" id="recordStatus">Records everything the Arduino sends, from Connect to Disconnect. The trial name goes in the file name and in every row.</p>
             </div>
           </div>
@@ -293,9 +352,18 @@
   </div>
   <script>
     const $ = id => document.getElementById(id);
-    const state = { angle: 42, pressure: 8.6, loss: 2.84, running: true, connected: false, started: Date.now(), history: [] };
+    const all = selector => document.querySelectorAll(selector);
+    const state = { angle: 0, pressure: 0, loss: 0, connected: false, ready: false, arduinoMode: '', started: Date.now(), history: [] };
     const MAX_SAMPLES = 120;
     const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const setText = (id, text) => { if ($(id).textContent !== String(text)) $(id).textContent = text; };
+
+    // Settings this browser remembers. Storage can be missing or blocked, so every access is guarded.
+    const store = {
+      get(key, fallback) { try { const value = localStorage.getItem(`flexsense.${key}`); return value === null ? fallback : JSON.parse(value); } catch { return fallback; } },
+      set(key, value) { try { localStorage.setItem(`flexsense.${key}`, JSON.stringify(value)); } catch {} },
+    };
+
     function lossFromAngle(angle) {
       const base = Number($('baseInput').value) || 0;
       const sensitivity = Number($('sensitivityInput').value) || .055;
@@ -307,10 +375,8 @@
       if (Number.isFinite(next.pressure)) state.pressure = clamp(next.pressure, 0, 30);
       if (Number.isFinite(next.loss)) state.loss = Math.max(0, next.loss);
       else if (!fromHardware) state.loss = lossFromAngle(state.angle);  // don't invent a measured loss for hardware rows
-      $('angleSlider').value = state.angle; $('sliderValue').textContent = Math.round(state.angle);
-      $('angleReadout').textContent = Math.round(state.angle); $('metricAngle').textContent = Math.round(state.angle);
-      $('pressureReadout').textContent = state.pressure.toFixed(1); $('lossReadout').textContent = state.loss.toFixed(2);
-      if (!fromHardware) $('lossInput').value = state.loss.toFixed(2);
+      setText('angleReadout', Math.round(state.angle)); setText('metricAngle', Math.round(state.angle));
+      setText('pressureReadout', state.pressure.toFixed(1)); setText('lossReadout', state.loss.toFixed(2));
       drawFinger(state.angle); addSample();
     }
     function point(x, y, length, degrees) {
@@ -350,35 +416,380 @@
       html += `<g transform="translate(${W-310},8)"><line x1="0" x2="18" y1="4" y2="4" stroke="#70a9ff" stroke-width="3"/><text class="axis-label" x="24" y="8">Angle (°)</text><line x1="83" x2="101" y1="4" y2="4" stroke="#43d5bb" stroke-width="3"/><text class="axis-label" x="107" y="8">Loss (dB)</text><line x1="174" x2="192" y1="4" y2="4" stroke="#ffbf69" stroke-width="3"/><text class="axis-label" x="198" y="8">Pressure (PSI)</text></g>`;
       chart.innerHTML = html;
     }
-    function tick() {
-      if (state.running && !state.connected) {
-        const t = Date.now()/1000;
-        const angle = 42 + Math.sin(t * .9) * 25 + Math.sin(t * .31) * 9;
-        setData({angle, pressure: 5.2 + angle*.08 + Math.sin(t*1.7)*.4});
-      }
-      const elapsed = Math.floor((Date.now()-state.started)/1000); $('duration').textContent = `${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`;
-    }
     function showStatus() {
-      const text = state.connected ? 'Arduino connected' : state.running ? 'Simulation active' : 'Simulation paused';
-      $('status').innerHTML = `<i class="dot ${state.connected || state.running ? '' : 'off'}"></i><span>${text}</span>`;
+      $('status').innerHTML = `<i class="dot"></i><span>${state.connected ? 'Arduino connected' : 'Simulator'}</span>`;
     }
-    function pauseSimulation() { state.running = false; $('simulateBtn').textContent = 'Resume simulation'; showStatus(); }
-    $('angleSlider').addEventListener('input', e => { pauseSimulation(); setData({angle:Number(e.target.value), loss:Number($('lossInput').value)}); });
-    $('pressureInput').addEventListener('input', e => setData({pressure:Number(e.target.value), loss:Number($('lossInput').value)}));
-    $('lossInput').addEventListener('input', e => setData({loss:Number(e.target.value)}));
-    ['baseInput','sensitivityInput','neutralInput'].forEach(id => $(id).addEventListener('change', () => { if (!state.connected) setData({loss:lossFromAngle(state.angle)}); }));
-    $('simulateBtn').addEventListener('click', () => { state.running = !state.running; $('simulateBtn').textContent = state.running ? 'Pause simulation' : 'Resume simulation'; showStatus(); });
-    $('neutralBtn').addEventListener('click', () => { setData({angle:0}); pauseSimulation(); });
+
+    // Pump commands. The sketch takes single characters: I inflate, H hold, V vent,
+    // K keep-alive (it vents if none arrive for 1.5 s), X hand control back to the FSR.
+    // drive() sends I, H or V to the Arduino when one is connected, or to the simulator.
+    const encoder = new TextEncoder();
+    const MODE_TEXT = { FSR: 'FSR in control', INFL: 'Inflating', HOLD: 'Holding', VENT: 'Venting', STOP: 'Stopped by the FSR, vented', MAX: 'At the pressure limit, holding' };
+    const COMMAND_SETTLE_MS = 400;  // rows received sooner than this after a command may predate it
+    let serialWriter = null, lastDriveMs = -Infinity;
+
+    function sendCommand(command) {
+      return serialWriter ? serialWriter.write(encoder.encode(command)).catch(() => {}) : Promise.resolve();
+    }
+    const canDrive = () => !state.connected || state.ready;  // not during the sketch's startup vent
+    function drive(command) {
+      if (!canDrive()) return;
+      if (state.connected) sendCommand(command); else simCommand(command);
+      lastDriveMs = performance.now();
+      showActuator();
+    }
+    // The calibration view's Inflate, Hold and Vent buttons. Each one's data-command is the character it sends.
+    const CONTROL_BUTTONS = { I: 'INFL', H: 'HOLD', V: 'VENT' };  // command -> Mode label it lights up for
+    function showArduinoMode(mode) {
+      all('.control-mode').forEach(el => { el.textContent = mode ? (MODE_TEXT[mode] || mode) : ''; });
+      all('[data-command]').forEach(button => button.classList.toggle('active', mode === CONTROL_BUTTONS[button.dataset.command]));
+    }
+    function enableControls(enabled) {
+      all('[data-command]').forEach(button => { button.disabled = !enabled; });
+    }
+    all('[data-command]').forEach(button => button.addEventListener('click', () => drive(button.dataset.command)));
+
+    function showActuator() {
+      const mode = state.connected ? state.arduinoMode : sim.mode;
+      const text = !mode ? 'Starting up' : mode === 'VENT' && state.pressure < .05 ? 'Vented' : MODE_TEXT[mode] || mode;
+      setText('actuatorText', text);
+      setText('actuatorSource', state.connected ? 'Arduino' : 'simulated');
+    }
+
+    // Simulator: a bladder that answers I, H and V like the sketch does. In the
+    // game the bladder is vented and the arrow keys stand in for the patient's own effort.
+    const SIM = { MAX_PSI: 3, FILL_PSI_PER_S: .8, VENT_TIME_S: .5, DEG_PER_PSI: 30, LAG_S: .25, EFFORT_DEG_PER_S: 80 };  // MAX_PSI mirrors MAX_DASHBOARD_PSI
+    const sim = { mode: 'VENT', pressure: 0, angle: 0, lastMs: performance.now() };
+    function simCommand(command) {
+      sim.mode = command === 'I' ? (sim.pressure < SIM.MAX_PSI ? 'INFL' : 'MAX') : command === 'H' ? 'HOLD' : 'VENT';
+    }
+    function simStep() {
+      const now = performance.now(), dt = Math.min(.5, (now - sim.lastMs) / 1000);
+      sim.lastMs = now;
+      if (sim.mode === 'INFL') {
+        sim.pressure += SIM.FILL_PSI_PER_S * dt;
+        if (sim.pressure >= SIM.MAX_PSI) { sim.pressure = SIM.MAX_PSI; sim.mode = 'MAX'; }
+      } else if (sim.mode === 'VENT') {
+        sim.pressure *= Math.exp(-dt / SIM.VENT_TIME_S);
+      }
+      if (exercise === 'game') {
+        const direction = topKey() === 'up' ? 1 : topKey() === 'down' ? -1 : 0;
+        sim.angle = clamp(sim.angle + direction * SIM.EFFORT_DEG_PER_S * dt, 0, 120);
+      } else {
+        sim.angle += (sim.pressure * SIM.DEG_PER_PSI - sim.angle) * (1 - Math.exp(-dt / SIM.LAG_S));
+      }
+      setData({ angle: sim.angle, pressure: sim.pressure });
+      showActuator();
+    }
+
+    // Exercise modes
+    const EXERCISE_NAMES = { auto: 'Automatic cycle', manual: 'Manual', game: 'Spaceship game' };
+    let exercise = 'auto';
+    function setExercise(next, initial = false) {
+      if (!EXERCISE_NAMES[next]) next = 'auto';
+      if (!initial) {
+        if (next === exercise) return;
+        stopAuto('Stopped: you switched modes');
+        releaseAllKeys(true);
+        if (game.status !== 'ready') resetGame();
+        // Leave the bladder vented, unless the FSR is in charge and the page never took control.
+        if (!state.connected || (state.ready && state.arduinoMode !== 'FSR')) drive('V');
+      }
+      exercise = next;
+      store.set('exercise', next);
+      document.querySelectorAll('.mode-tab').forEach(tab => tab.setAttribute('aria-pressed', String(tab.dataset.mode === next)));
+      document.querySelectorAll('.mode-panel').forEach(panel => { panel.hidden = panel.dataset.panel !== next; });
+      const gameOn = next === 'game';
+      $('stage').classList.toggle('game-on', gameOn);
+      $('stageTitle').textContent = gameOn ? 'Spaceship game' : 'Articulated finger';
+      $('stageNote').textContent = gameOn ? 'Bend to fly up · straighten to fly down' : 'Right index · calibrated';
+      $('angleLabel').textContent = gameOn ? 'Angle' : 'Live bend angle';
+      $('exerciseName').textContent = EXERCISE_NAMES[next];
+      runGameLoop(gameOn);
+      refreshControls();
+    }
+    document.querySelectorAll('.mode-tab').forEach(tab => tab.addEventListener('click', () => setExercise(tab.dataset.mode)));
+
+    function refreshControls() {
+      const ready = canDrive();
+      $('autoStartBtn').disabled = auto.running || !ready;
+      $('autoStopBtn').disabled = !auto.running;
+      for (const [id] of Object.values(AUTO_INPUTS)) $(id).disabled = auto.running;
+      $('bendBtn').disabled = $('straightenBtn').disabled = !ready;
+      $('gameStartBtn').disabled = game.status === 'playing' || !ready;
+    }
+
+    // Automatic mode: timed inflate, hold, vent and rest phases, repeated.
+    // Phases follow the clock, and step on every data row as well as the timer,
+    // so a throttled background tab doesn't stretch them while the Arduino is connected.
+    const PHASES = [
+      { key: 'inflate', command: 'I', label: 'Inflate', text: 'Inflating' },
+      { key: 'hold', command: 'H', label: 'Hold', text: 'Holding' },
+      { key: 'vent', command: 'V', label: 'Vent', text: 'Venting' },
+      { key: 'rest', command: 'V', label: 'Rest', text: 'Resting' },
+    ];
+    const AUTO_INPUTS = { inflate: ['autoInflate', .5, 60], hold: ['autoHold', 0, 60], vent: ['autoVent', .5, 60], rest: ['autoRest', 0, 60], reps: ['autoReps', 1, 100] };
+    let auto = { running: false, message: 'Ready' };
+
+    function readAutoSettings() {
+      const settings = {};
+      for (const [key, [id, min, max]] of Object.entries(AUTO_INPUTS)) {
+        let value = parseFloat($(id).value);
+        if (!Number.isFinite(value)) value = parseFloat($(id).defaultValue);
+        value = clamp(key === 'reps' ? Math.round(value) : value, min, max);
+        $(id).value = value;
+        settings[key] = value;
+      }
+      store.set('auto', settings);
+      return settings;
+    }
+    function startAuto() {
+      if (auto.running || !canDrive()) return;
+      const settings = readAutoSettings(), now = performance.now();
+      auto = { running: true, settings, rep: 1, phase: 0, phaseStart: now, phaseEnd: now + settings.inflate * 1000 };
+      drive('I');
+      showAuto(now); refreshControls();
+    }
+    function stopAuto(message, vent = true) {
+      if (!auto.running) return;
+      auto = { running: false, message };
+      if (vent) drive('V');
+      showAuto(); refreshControls();
+    }
+    function stepAuto(now) {
+      if (!auto.running) return;
+      const { settings } = auto;
+      let changed = false;
+      while (now >= auto.phaseEnd) {  // zero-length phases are skipped
+        auto.phase += 1;
+        if (auto.phase === PHASES.length) {
+          auto.phase = 0;
+          auto.rep += 1;
+          if (auto.rep > settings.reps) { stopAuto(`Done · ${settings.reps} ${settings.reps === 1 ? 'rep' : 'reps'}`); return; }
+        }
+        auto.phaseStart = auto.phaseEnd;
+        auto.phaseEnd = auto.phaseStart + settings[PHASES[auto.phase].key] * 1000;
+        changed = true;
+      }
+      if (changed) drive(PHASES[auto.phase].command);
+      showAuto(now);
+    }
+    function showAuto(now = performance.now()) {
+      if (!auto.running) { setText('autoStatus', auto.message); $('autoProgress').style.width = '0%'; return; }
+      const phase = PHASES[auto.phase], left = Math.max(0, (auto.phaseEnd - now) / 1000), span = auto.phaseEnd - auto.phaseStart;
+      setText('autoStatus', `Rep ${auto.rep} of ${auto.settings.reps} · ${phase.text} · ${left.toFixed(1)} s`);
+      $('autoProgress').style.width = `${span > 0 ? clamp((now - auto.phaseStart) / span, 0, 1) * 100 : 100}%`;
+    }
+    $('autoStartBtn').addEventListener('click', startAuto);
+    $('autoStopBtn').addEventListener('click', () => stopAuto('Stopped'));
+    for (const [id] of Object.values(AUTO_INPUTS)) $(id).addEventListener('change', readAutoSettings);
+
+    // Manual mode: hold Up to inflate, hold Down to vent, let go to hold.
+    // The last key pressed wins while both are down. In the game, without an
+    // Arduino, the same keys move the simulated finger directly.
+    const ARROWS = { ArrowUp: 'up', ArrowDown: 'down' };
+    let heldKeys = [];
+    const topKey = () => heldKeys[heldKeys.length - 1];
+    const keysActive = () => exercise === 'manual' ? canDrive() : exercise === 'game' && !state.connected;
+
+    function pressKey(key) {
+      if (heldKeys.includes(key) || !keysActive()) return;
+      heldKeys.push(key);
+      applyKeys();
+    }
+    function releaseKey(key) {
+      if (!heldKeys.includes(key)) return;
+      heldKeys = heldKeys.filter(k => k !== key);
+      applyKeys();
+    }
+    // silent: forget the keys without sending Hold, e.g. after the FSR stop has already vented.
+    function releaseAllKeys(silent = false) {
+      if (!heldKeys.length) return;
+      heldKeys = [];
+      if (silent) showKeys(); else applyKeys();
+    }
+    function applyKeys() {
+      if (exercise === 'manual') drive(topKey() === 'up' ? 'I' : topKey() === 'down' ? 'V' : 'H');
+      showKeys();
+    }
+    function showKeys() {
+      $('bendBtn').classList.toggle('active', topKey() === 'up');
+      $('straightenBtn').classList.toggle('active', topKey() === 'down');
+      setText('manualStatus', topKey() === 'up' ? 'Bending' : topKey() === 'down' ? 'Straightening' : 'No key held');
+    }
+
+    const isTyping = target => target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]');
+    window.addEventListener('keydown', event => {
+      if (isTyping(event.target) || event.ctrlKey || event.metaKey || event.altKey || !$('calibration').hidden) return;
+      if (exercise === 'game' && event.key === ' ') {
+        event.preventDefault();
+        if (!event.repeat) startGame();
+        return;
+      }
+      const key = ARROWS[event.key];
+      if (!key || exercise === 'auto') return;
+      event.preventDefault();  // don't scroll the page
+      if (!event.repeat) pressKey(key);
+    });
+    window.addEventListener('keyup', event => { const key = ARROWS[event.key]; if (key) releaseKey(key); });
+    // A key released in another window never sends keyup, so stop when the page loses focus.
+    window.addEventListener('blur', () => releaseAllKeys());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAllKeys(); });
+
+    for (const [id, key] of [['bendBtn', 'up'], ['straightenBtn', 'down']]) {
+      const button = $(id);
+      button.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        button.setPointerCapture(event.pointerId);
+        pressKey(key);
+      });
+      for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, () => releaseKey(key));
+      button.addEventListener('contextmenu', event => event.preventDefault());  // long press on touch screens
+    }
+
+    // Game mode: a side-scrolling ship whose height follows the bend angle.
+    const SHIP = { x: .16, top: 26, bottom: 74, radius: 13 };  // bottom leaves room for the readout strip
+    const game = { status: 'ready', score: 0, best: 0, rocks: [], stars: [], shipY: null, shipVy: 0, elapsed: 0, spawnIn: 0, lastMs: 0, frame: 0 };
+    const canvas = $('game'), ctx = canvas.getContext('2d');
+    let view = { w: 0, h: 0, dpr: 1 };
+
+    function gameTopAngle() {
+      const value = parseFloat($('gameTopAngle').value);
+      return Number.isFinite(value) ? clamp(value, 10, 120) : 90;
+    }
+    $('gameTopAngle').addEventListener('change', () => { const value = gameTopAngle(); $('gameTopAngle').value = value; store.set('gameTop', value); });
+
+    function startGame() {
+      if (exercise !== 'game' || game.status === 'playing' || !canDrive()) return;
+      Object.assign(game, { status: 'playing', score: 0, rocks: [], elapsed: 0, spawnIn: .8 });
+      drive('V');  // the finger moves under the patient's own effort
+      showGame(); refreshControls();
+    }
+    function endGame() {
+      game.status = 'over';
+      if (game.score > game.best) { game.best = game.score; store.set('best', game.best); }
+      showGame(); refreshControls();
+    }
+    function resetGame() {
+      Object.assign(game, { status: 'ready', score: 0, rocks: [] });
+      showGame(); refreshControls();
+    }
+    function showGame() {
+      setText('scoreText', game.score); setText('bestText', game.best);
+      const overlay = {
+        ready: ['Spaceship game', 'Bend your finger to fly up and straighten it to fly down. Press Start game or Space.'],
+        over: ['Game over', `Score ${game.score}. Press Play again or Space.`],
+      }[game.status];
+      $('gameOverlay').hidden = !overlay;
+      if (overlay) { setText('overlayTitle', overlay[0]); setText('overlayText', overlay[1]); }
+      setText('gameStatus', game.status === 'playing' ? `Playing · score ${game.score}` : game.status === 'over' ? `Game over · score ${game.score}` : 'Ready');
+      setText('gameStartBtn', game.status === 'over' ? 'Play again' : 'Start game');
+    }
+    $('gameStartBtn').addEventListener('click', startGame);
+
+    function sizeCanvas() {
+      const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+      if (w === view.w && h === view.h && dpr === view.dpr) return;
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      view = { w, h, dpr };
+      game.stars = Array.from({ length: 70 }, () => ({ x: Math.random() * w, y: Math.random() * h, z: .25 + Math.random() * .75 }));
+    }
+    const angleToY = angle => view.h - SHIP.bottom - clamp(angle / gameTopAngle(), 0, 1) * (view.h - SHIP.top - SHIP.bottom);
+    const rockSpeed = () => Math.min(340, 150 + 6 * game.elapsed);  // px/s, speeding up over time
+
+    function makeRock() {
+      const r = 12 + Math.random() * 16;
+      const points = Array.from({ length: 9 }, (_, i) => ({ a: i / 9 * Math.PI * 2, d: r * (.72 + Math.random() * .3) }));
+      return { x: view.w + r, y: SHIP.top + Math.random() * (view.h - SHIP.top - SHIP.bottom), r, points, spin: 0, spinRate: (Math.random() - .5) * 2, speed: .85 + Math.random() * .3, passed: false };
+    }
+    function updateRocks(dt) {
+      game.elapsed += dt;
+      game.spawnIn -= dt;
+      if (game.spawnIn <= 0) { game.rocks.push(makeRock()); game.spawnIn = Math.max(.55, 1.4 - .025 * game.elapsed); }
+      const shipX = view.w * SHIP.x;
+      for (const rock of game.rocks) {
+        rock.x -= rockSpeed() * rock.speed * dt;
+        rock.spin += rock.spinRate * dt;
+        if (Math.hypot(rock.x - shipX, rock.y - game.shipY) < rock.r * .85 + SHIP.radius) { endGame(); return; }
+        if (!rock.passed && rock.x + rock.r < shipX - SHIP.radius) { rock.passed = true; game.score += 1; showGame(); }
+      }
+      game.rocks = game.rocks.filter(rock => rock.x + rock.r > -10);
+    }
+    function drawGame(dt, ms) {
+      const { w, h } = view;
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, '#061214'); sky.addColorStop(1, '#0f272a');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+
+      const drift = (game.status === 'playing' ? rockSpeed() : 40) * dt * .35;
+      ctx.fillStyle = '#d9f4f0';
+      for (const star of game.stars) {
+        star.x -= drift * star.z;
+        if (star.x < 0) { star.x += w; star.y = Math.random() * h; }
+        ctx.globalAlpha = .25 + star.z * .55;
+        ctx.fillRect(star.x, star.y, star.z * 1.8, star.z * 1.8);
+      }
+      ctx.globalAlpha = 1;
+
+      // The ship's range: straight finger at the bottom line, the chosen angle at the top one.
+      ctx.setLineDash([4, 6]); ctx.strokeStyle = '#2f6260'; ctx.lineWidth = 1;
+      ctx.fillStyle = '#759391'; ctx.font = '11px ui-sans-serif, system-ui, sans-serif'; ctx.textAlign = 'center';
+      for (const [angle, label] of [[0, 'straight · 0°'], [gameTopAngle(), `bent · ${gameTopAngle()}°`]]) {
+        const y = Math.round(angleToY(angle)) + .5;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        ctx.fillText(label, w / 2, angle ? y + 14 : y - 6);
+      }
+      ctx.setLineDash([]);
+
+      for (const rock of game.rocks) {
+        ctx.save(); ctx.translate(rock.x, rock.y); ctx.rotate(rock.spin);
+        ctx.beginPath();
+        rock.points.forEach((p, i) => ctx[i ? 'lineTo' : 'moveTo'](Math.cos(p.a) * p.d, Math.sin(p.a) * p.d));
+        ctx.closePath();
+        ctx.fillStyle = '#2a4245'; ctx.fill();
+        ctx.strokeStyle = '#8fb3ae'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      }
+
+      const flame = game.status === 'playing' ? 9 + Math.sin(ms / 45) * 3 : 5;
+      ctx.save();
+      ctx.translate(w * SHIP.x, game.shipY);
+      ctx.rotate(clamp(game.shipVy / 500, -.45, .45));
+      ctx.fillStyle = '#ffbf69';
+      ctx.beginPath(); ctx.moveTo(-9, -5); ctx.lineTo(-9 - flame, 0); ctx.lineTo(-9, 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#d9f4f0';
+      ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -12); ctx.lineTo(-6, 0); ctx.lineTo(-12, 12); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#43d5bb';
+      ctx.beginPath(); ctx.arc(3, 0, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    function gameFrame(ms) {
+      game.frame = requestAnimationFrame(gameFrame);
+      sizeCanvas();
+      if (!view.w || !view.h) return;
+      const dt = game.lastMs ? Math.min(.05, (ms - game.lastMs) / 1000) : 0;  // a hidden tab pauses rather than jumps
+      game.lastMs = ms;
+      // Data rows arrive 5 times a second, so ease the ship towards the latest angle.
+      const target = angleToY(state.angle), before = game.shipY ?? target;
+      game.shipY = before + (target - before) * (dt ? 1 - Math.exp(-dt / .09) : 1);
+      game.shipVy = dt ? (game.shipY - before) / dt : 0;
+      if (game.status === 'playing') updateRocks(dt);
+      drawGame(dt, ms);
+    }
+    function runGameLoop(on) {
+      if (on && !game.frame) { game.lastMs = 0; game.frame = requestAnimationFrame(gameFrame); }
+      if (!on && game.frame) { cancelAnimationFrame(game.frame); game.frame = 0; }
+    }
 
     // Arduino over USB (Web Serial API: Chrome, Edge, Firefox 151+). src/main.cpp prints a
     // whitespace-separated table; its header row names the columns.
     const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
-    let columns = DEFAULT_COLUMNS, serialReader = null, serialWriter = null;
+    let columns = DEFAULT_COLUMNS, serialReader = null;
     let userDisconnect = false;  // set when Disconnect is clicked, so any other end of the connection reads as lost
 
     // The live and calibration views each have a Connect button, a status line and
     // pump buttons, all driven together through these classes.
-    const all = selector => document.querySelectorAll(selector);
     const showSerialStatus = text => all('.serial-status').forEach(el => { el.textContent = text; });
     function setConnectButtons({ text, disabled }) {
       all('.connect-btn').forEach(button => {
@@ -391,28 +802,9 @@
       $('calInput').textContent = calibration;
     }
 
-    // Pump control. The sketch takes single characters: I inflate, H hold, V vent,
-    // K keep-alive (it vents if none arrive for 1.5 s), X hand control back to the FSR.
-    // Each pump button's data-command is the character it sends.
-    const encoder = new TextEncoder();
-    const MODE_TEXT = { FSR: 'FSR in control', INFL: 'Inflating', HOLD: 'Holding', VENT: 'Venting', STOP: 'Stopped by the FSR, vented', MAX: 'At the pressure limit, holding' };
-    const CONTROL_BUTTONS = { I: 'INFL', H: 'HOLD', V: 'VENT' };  // command -> Mode label it lights up for
-
-    function sendCommand(command) {
-      return serialWriter ? serialWriter.write(encoder.encode(command)).catch(() => {}) : Promise.resolve();
-    }
-    function showArduinoMode(mode) {
-      all('.control-mode').forEach(el => { el.textContent = mode ? (MODE_TEXT[mode] || mode) : ''; });
-      all('[data-command]').forEach(button => button.classList.toggle('active', mode === CONTROL_BUTTONS[button.dataset.command]));
-    }
-    function enableControls(enabled) {
-      all('[data-command]').forEach(button => { button.disabled = !enabled; });
-    }
-    all('[data-command]').forEach(button => button.addEventListener('click', () => sendCommand(button.dataset.command)));
-
     // Recording: every data row from Connect to Disconnect, downloadable as CSV.
     // Times are when the browser received each row.
-    let recording = null;  // { columns, startMs, rows: [{ seconds, clock, values }], savedRows }
+    let recording = null;  // { columns, startMs, rows: [{ seconds, clock, exercise, values }], savedRows }
 
     const unsavedRows = () => recording ? recording.rows.length - recording.savedRows : 0;
     const pad = (n, width = 2) => String(n).padStart(width, '0');
@@ -421,6 +813,12 @@
       const text = String(value ?? '');
       return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
     };
+    // The page's side of each row: Exercise, Rep and Phase columns.
+    function exerciseCells() {
+      if (exercise === 'auto') return ['Automatic', auto.running ? auto.rep : '', auto.running ? PHASES[auto.phase].label : ''];
+      if (exercise === 'manual') return ['Manual', '', topKey() === 'up' ? 'Bend' : topKey() === 'down' ? 'Straighten' : ''];
+      return ['Game', '', game.status === 'playing' ? 'Playing' : ''];
+    }
 
     function startRecording() {
       recording = { columns: null, startMs: 0, rows: [], savedRows: 0 };
@@ -430,7 +828,7 @@
       const now = performance.now();
       if (!recording.rows.length) { recording.columns = columns; recording.startMs = now; }
       const values = Object.fromEntries(columns.map((name, i) => [name, cells[i]]));
-      recording.rows.push({ seconds: (now - recording.startMs) / 1000, clock: new Date(), values });
+      recording.rows.push({ seconds: (now - recording.startMs) / 1000, clock: new Date(), exercise: exerciseCells(), values });
       showRecording();
     }
     function showRecording() {
@@ -444,10 +842,10 @@
     }
     function downloadRecording() {
       const trial = $('trialInput').value.trim();
-      const lines = [['Time(s)', 'Clock time', 'Trial', ...recording.columns]];
+      const lines = [['Time(s)', 'Clock time', 'Trial', 'Exercise', 'Rep', 'Phase', ...recording.columns]];
       for (const row of recording.rows) {
         const readings = recording.columns.map(name => row.values[name] === '--' ? '' : row.values[name]);  // "--" becomes an empty cell
-        lines.push([row.seconds.toFixed(3), clockText(row.clock), trial, ...readings]);
+        lines.push([row.seconds.toFixed(3), clockText(row.clock), trial, ...row.exercise, ...readings]);
       }
       const started = fileStamp(recording.rows[0].clock);
       const slug = trial.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -478,13 +876,23 @@
       }
       const column = name => parseFloat(cells[columns.indexOf(name)]);  // "--" parses as NaN and is skipped
       const row = { angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)'), wave: column('Wave(V)'), mode: cells[columns.indexOf('Mode')] };
+      const mode = row.mode, now = performance.now();
+      state.ready = true;  // the sketch has finished its startup vent
+      state.arduinoMode = mode;
+      // The FSR stop, or the sketch's timeout, took control. Don't let the next phase or key release undo it.
+      if ((mode === 'STOP' || mode === 'FSR') && now - lastDriveMs > COMMAND_SETTLE_MS) {
+        stopAuto(mode === 'STOP' ? 'Stopped: the FSR was pressed' : 'Stopped: the Arduino took back control', false);
+        releaseAllKeys(true);
+      }
+      stepAuto(now);
       recordRow(cells);
       setData({ angle: row.angle, loss: row.loss, pressure: row.pressure }, true);
       showInputMode('Arduino · live');
-      showArduinoMode(row.mode);
+      showArduinoMode(mode);
       enableControls(true);  // only once the sketch has finished its startup vent
       calibrationRow(row);
-      sendCommand('K');      // answering each row keeps the sketch from timing out
+      showActuator(); refreshControls();
+      sendCommand('K');  // answering each row keeps the sketch from timing out
     }
 
     async function connectArduino() {
@@ -502,14 +910,17 @@
       } finally {
         setConnectButtons({ disabled: false });
       }
+      // Stop whatever the simulator was doing; nothing is sent until the sketch's first data row.
+      stopAuto('Stopped: connected to the Arduino');
+      releaseAllKeys(true);
       const decoder = new TextDecoderStream();
       const piped = port.readable.pipeTo(decoder.writable).catch(() => {});
       serialReader = decoder.readable.getReader();
       serialWriter = port.writable.getWriter();
       columns = DEFAULT_COLUMNS;
       startRecording();
-      state.connected = true;
-      pauseSimulation();  // so a dropped cable doesn't fall back to fake motion
+      Object.assign(state, { connected: true, ready: false, arduinoMode: '' });
+      showStatus(); showActuator(); refreshControls();
       setConnectButtons({ text: 'Disconnect' });
       showInputMode('Arduino · waiting for data');
       showSerialStatus('');
@@ -534,6 +945,10 @@
       } finally {
         serialReader.releaseLock();
         serialReader = null;
+        stopAuto('Stopped: the Arduino disconnected', false);  // X below vents
+        releaseAllKeys(true);
+        state.ready = false;
+        refreshControls();
         enableControls(false);
         showArduinoMode('');
         stopCalibrationInput();
@@ -544,10 +959,10 @@
         await piped;
         await port.close().catch(() => {});
         state.connected = false;
-        showRecording();
+        Object.assign(sim, { mode: 'VENT', pressure: state.pressure, angle: state.angle, lastMs: performance.now() });  // relax from the last real reading
+        showRecording(); showStatus(); showActuator(); refreshControls();
         setConnectButtons({ text: 'Connect to Arduino' });
-        showInputMode('Manual simulator', 'Arduino not connected');
-        showStatus();
+        showInputMode('Simulator', 'Arduino not connected');
       }
     }
 
@@ -886,8 +1301,15 @@
     // Views: #calibration shows the calibration view, anything else the live session.
     function showView() {
       const calibrating = location.hash === '#calibration', trends = location.hash === '#trends';
-      $('liveView').hidden = calibrating;
+      $('liveView').hidden = $('modeBar').hidden = calibrating;
       $('calibration').hidden = !calibrating;
+      // Capturing needs a still finger, so the exercise modes stop while the calibration view is open.
+      if (calibrating) {
+        stopAuto('Stopped: you opened Calibration');
+        releaseAllKeys();
+        if (game.status === 'playing') resetGame();
+      }
+      runGameLoop(!calibrating && exercise === 'game');
       $('viewTitle').textContent = calibrating ? 'Calibration' : 'Live session';
       $('viewSubtitle').textContent = calibrating ? 'Fit the bend angle to the optical loss, then paste the result into the sketch' : 'Optical finger-sleeve feedback for guided rehab exercises';
       const current = calibrating ? '#calibration' : trends ? '#trends' : '#overview';
@@ -899,10 +1321,26 @@
     window.addEventListener('hashchange', showView);
     window.addEventListener('resize', () => { if (!$('calibration').hidden) drawFitChart(); });
 
+    function tick() {
+      if (!state.connected) simStep();
+      stepAuto(performance.now());
+      const elapsed = Math.floor((Date.now()-state.started)/1000);
+      setText('duration', `${pad(Math.floor(elapsed/60))}:${pad(elapsed%60)}`);
+    }
+
+    // Restore this browser's settings, then start.
+    const savedAuto = store.get('auto', {});
+    for (const [key, [id]] of Object.entries(AUTO_INPUTS)) if (Number.isFinite(savedAuto?.[key])) $(id).value = savedAuto[key];
+    const savedTop = store.get('gameTop', null);
+    if (Number.isFinite(savedTop)) $('gameTopAngle').value = savedTop;
+    game.best = Number.isFinite(store.get('best', 0)) ? store.get('best', 0) : 0;
+    setExercise(store.get('exercise', 'auto'), true);
     loadCalibration();
     refreshCalibration();
     showView();
-    setData({angle:42, pressure:8.6, loss:lossFromAngle(42)}); setInterval(tick, 100);
+    setData({ angle: 0, pressure: 0 });
+    showStatus(); showActuator(); showAuto(); showKeys(); showGame(); refreshControls();
+    setInterval(tick, 100);
   </script>
 </body>
 </html>

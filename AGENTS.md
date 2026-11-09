@@ -2,8 +2,9 @@
 
 A soft pneumatic finger-rehab actuator with a soft optical bend sensor. An Arduino Uno runs the air pump and
 exhaust valve, reads the sensors, works out the finger's bend angle and streams everything over USB serial.
-`index.html` ("FlexSense") is a browser dashboard that shows the live angle, can inflate, hold and vent the
-bladder, and exports recordings as CSV.
+`index.html` ("FlexSense") is a browser dashboard that shows the live angle, runs three exercise modes (an
+automatic timed cycle, manual control with the arrow keys and a placeholder spaceship game), and exports recordings
+as CSV.
 
 GitHub: `hbenuid/ME571-project-2`. This file is the reference for anyone, person or agent, working in the repo.
 Update it when behaviour changes.
@@ -129,13 +130,41 @@ Allow. Cancelling Chrome's chooser, or Block in Firefox, shows "No port selected
 
 The page has two views: **Live session** (the default) and **Calibration** (`#calibration`). The sidebar links, or the
 tabs at the top on narrow screens, switch between them and highlight the current one. Both views share one serial
-connection and recording. Each has its own Connect, Inflate, Hold and Vent buttons, and they all act on the same port.
+connection and recording. Each has its own Connect button, and they act on the same port. The live session drives
+the bladder through the exercise modes below. The calibration view has its own Inflate, Hold and Vent buttons for
+setting a bend. Opening the calibration view stops the automatic cycle, releases held keys and ends a game, because
+a capture needs a still finger.
+
+### Exercise modes
+
+Three tabs under the live session's header choose the mode. The panel next to them shows what the actuator is doing (the
+sketch's `Mode` column, or the simulator's). Switching modes stops the automatic cycle, releases any held key and
+vents the bladder. It doesn't vent if the sketch is still in `FSR` mode and the page never took control.
+
+| Mode | What it does | Commands |
+|---|---|---|
+| **Automatic** | Repeats inflate, hold, vent and rest for the times set in seconds, for a set number of reps (defaults 3, 2, 3, 2 s and 10 reps). **Start** begins and **Stop and vent** ends it early. | `I` at the start of inflate, `H` at hold, `V` at vent and rest |
+| **Manual** | Hold **↑** to bend (inflate) and **↓** to straighten (vent). Let go to hold. While both keys are down, the last one pressed wins. The **Bend** and **Straighten** buttons work the same way when pressed and held. | `I`, `V`, then `H` on release |
+| **Game** | A placeholder side-scrolling game. The ship's height follows the bend angle, from straight at the bottom to the "Top of screen at" angle (default 90°) at the top. Dodge asteroids to score one point for each one passed. One hit ends the game. **Start game** or **Space** starts it. | `V` at the start, so the finger moves under its own effort |
+
+- The automatic cycle runs on the clock. With an Arduino it also advances on every data row, so a background tab
+  doesn't stretch its phases. Inflation still stops at the sketch's `MAX_DASHBOARD_PSI`.
+- If a data row shows `STOP` (FSR pressed) or `FSR` (the sketch timed out), the page ends the automatic cycle and
+  forgets held keys, without sending anything. A held key needs a fresh press after that. Rows that arrive within
+  400 ms of a command (`COMMAND_SETTLE_MS`) are ignored for this check, because they may have been printed before
+  the command arrived.
+- Arrow keys release when the window loses focus or the tab is hidden, and Manual mode then sends `H`. Arrow keys
+  are ignored while typing in a text or number box.
+- The page remembers the mode, the automatic timings, the game's top angle and the best score in `localStorage`.
 
 ### Without an Arduino: the simulator
 
-The page starts in simulator mode ("Manual simulator" in the panel header). The finger bends along a made-up sine
-wave, or follows the Bending angle slider once you drag it. Loss comes from the "Simulator loss model" fields,
-`L = L₀ + k(θ − θ₀)`. None of this is real data, and it is never recorded.
+The page starts on the simulator ("Simulator" in the status pill). A simulated bladder answers `I`, `H` and `V`
+like the sketch does. It fills at 0.8 psi/s up to 3 psi (mirroring `MAX_DASHBOARD_PSI`), vents with a 0.5 s time
+constant and bends the finger 30° per psi. So the Automatic and Manual modes can be tried without hardware. In the
+Game, the bladder stays vented and **↑**/**↓** move the simulated finger directly, standing in for the patient's
+own effort. Loss comes from the "Simulator model" fields, `L = L₀ + k(θ − θ₀)`. None of this is real data, and it is
+never recorded.
 
 ### With an Arduino
 
@@ -143,23 +172,29 @@ wave, or follows the Bending angle slider once you drag it. Loss comes from the 
   whose first cell is `Force(g)` is a header and sets the column order. Data rows are matched to columns **by header
   name**, so the sketch can reorder columns but can't rename them without updating the page. `DEFAULT_COLUMNS` is
   used until a header arrives. Other lines, such as the startup messages, appear next to the Connect buttons.
-- Each data row updates the finger, the readouts and the chart (angle, loss, pressure) and the Mode text, and is
-  recorded. `--` values are skipped, so the last good value stays on screen.
+- Each data row updates the finger, the game, the readouts and the chart (angle, loss, pressure), the actuator
+  panel and the calibration view's live reading, and is recorded. `--` values are skipped, so the last good value
+  stays on screen.
 - The angle readouts show the real value. Only the finger drawing is capped at 120°.
-- The simulation pauses on connect, so a dropped cable doesn't fall back to fake motion.
+- Connecting stops the simulator, so a dropped cable doesn't fall back to fake motion. It also stops a running
+  automatic cycle. Disconnecting stops the cycle too, and the simulator carries on from the last real reading.
 - If the connection ends without Disconnect being clicked (cable pulled, board unplugged), the page shows
-  `Connection lost: …` next to the Connect buttons, turns the pump controls off and keeps the recording. Chrome
-  reports this as a stream error with its own message. Firefox ends the stream quietly, so the page tracks whether
-  Disconnect was clicked (`userDisconnect`) and otherwise shows `Connection lost: The Arduino was disconnected.`
-  The sketch vents on its own 1.5 s later either way.
+  `Connection lost: …` next to the Connect buttons, stops the automatic cycle and the pump commands, and keeps the
+  recording. Chrome reports this as a stream error with its own message. Firefox ends the stream quietly, so the
+  page tracks whether Disconnect was clicked (`userDisconnect`) and otherwise shows
+  `Connection lost: The Arduino was disconnected.` The sketch vents on its own 1.5 s later either way.
+- In the Game with an Arduino, the arrow keys do nothing. Only the real finger steers.
 
-### Pump control
+### Pump commands
 
-**Inflate**, **Hold** and **Vent** send `I`, `H` and `V`, the character in each button's `data-command`. The one
-matching the Mode column lights up in both views. They're enabled after the first data row, so not during
-the startup vent. The page answers **every data row with `K`**, which keeps the sketch's 1.5 s timeout from firing.
-Because keep-alives are tied to incoming rows rather than a timer, background-tab timer throttling shouldn't trip
-it. Disconnect sends `X` (waiting at most 500 ms) before closing the port.
+Every `I`, `H` or `V` goes through `drive()`, which sends it to the Arduino or, without one, to the simulator. The
+calibration view's **Inflate**, **Hold** and **Vent** send the character in each button's `data-command`, and the
+one matching the Mode column lights up. Nothing that sends `I`, `H` or `V` (**Start**, the arrow keys, **Bend**,
+**Straighten**, **Start game**, the calibration buttons) works until the first data row, so not during the startup
+vent. The page answers **every data row with `K`**, which keeps the
+sketch's 1.5 s timeout from firing. Because keep-alives are tied to incoming rows rather than a timer,
+background-tab timer throttling shouldn't trip it. Disconnect sends `X` (waiting at most 500 ms) before closing the
+port.
 
 ### Recording and CSV export
 
@@ -167,8 +202,11 @@ it. Disconnect sends `X` (waiting at most 500 ms) before closing the port.
   recorded.
 - **Download CSV** works during or after the connection.
 - Columns: `Time(s)` (seconds since the first row, 3 decimals), `Clock time` (local, `YYYY-MM-DD HH:MM:SS.mmm`),
-  `Trial` (the Trial name box at download time, repeated in every row), then every Arduino column under its header
-  name. `--` becomes an empty cell. Fields use RFC 4180 quoting and CRLF line endings, in UTF-8 without a BOM.
+  `Trial` (the Trial name box at download time, repeated in every row), `Exercise` (`Automatic`, `Manual` or
+  `Game`), `Rep` (the automatic cycle's rep while it runs), `Phase` (`Inflate`, `Hold`, `Vent` or `Rest` while the
+  cycle runs, `Bend` or `Straighten` while a manual key is held, `Playing` during a game), then every Arduino column
+  under its header name. The page's side of a row can be up to one row ahead of the sketch's `Mode` column.
+  `--` becomes an empty cell. Fields use RFC 4180 quoting and CRLF line endings, in UTF-8 without a BOM.
 - File name: `flexsense_<start date>_<start time>_<trial name>.csv`, for example
   `flexsense_2026-11-09_14-03-22_trial-3-50-grip.csv`.
 - Times are when the browser received each row, not when the Arduino measured it: a few ms of jitter at 5 rows/s.
@@ -211,7 +249,10 @@ These are defined in both files, so change them together:
 - **Angle formula.** The calibration view fits `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C` floored at 0, and its paste
   block uses those constant names and the sketch's `// Angle calibration:` comment line. If the sketch's formula
   changes, change the fit in the page too.
-- **Mode labels.** `MODE_LABELS` in the sketch, `MODE_TEXT` and `CONTROL_BUTTONS` in the page.
+- **Mode labels.** `MODE_LABELS` in the sketch, `MODE_TEXT` and `CONTROL_BUTTONS` in the page. The page also acts on
+  `STOP` and `FSR` (ending the automatic cycle) in `handleSerialLine`, and on `VENT` in `showActuator`.
+- **Pressure limit.** The simulator's `SIM.MAX_PSI` copies `MAX_DASHBOARD_PSI` so the simulator behaves like the
+  real bladder. It only affects the simulator.
 - **Command characters** `I`, `H`, `V`, `K`, `X`.
 - **Baud rate** 115200.
 - **Timeout.** The page's hint text quotes `DASHBOARD_TIMEOUT_MS` (1.5 s). Keep-alives go out once per data row, so
@@ -242,10 +283,13 @@ There are no automated tests in the repo. Changes so far have been checked like 
    `loop()` and check the pump and valve pins in each scenario: FSR mode, inflating to the limit, FSR stop, timeout
    handover, FSR re-arm, NaN pressure and `X`.
 3. **Dashboard in headless Chromium.** Replace `navigator.serial` with a fake port whose `readable` replays text in
-   the sketch's exact column widths (split mid-line) and whose `writable` records the commands sent. Check the
-   readouts, buttons, commands and CSV. For the calibration view, replay rows at known losses and check the fitted
-   constants against data generated from a known quadratic. Once rows are recorded, reloading the page opens the
-   leave-page dialog, which a headless run has to accept or it hangs.
+   the sketch's exact column widths (split mid-line) and whose `writable` records the commands sent. For the
+   exercise modes, make the fake port a small stand-in sketch: it switches mode on `I`/`H`/`V`/`X`, prints a row
+   every 200 ms with its current mode and a rising pressure while inflating, and can fake an FSR press. Check the
+   readouts, mode switches, commands (including that nothing follows an FSR stop) and CSV, in the simulator and
+   over the fake port. For the calibration view, replay rows at known losses and check the fitted constants against
+   data generated from a known quadratic. Once rows are recorded, reloading the page opens the leave-page dialog,
+   which a headless run has to accept or it hangs.
 4. **Dashboard in headless Firefox (151+), on Firefox's real serial code.** Drive Firefox with WebDriver BiDi
    (`firefox --headless --profile <throwaway> --remote-debugging-port=0`, no extra install needed). With the pref
    `dom.webserial.testing.enabled` set to `true`, `requestPort()` picks a mock Arduino Uno (`test-device-1`, USB
@@ -266,9 +310,9 @@ There are no automated tests in the repo. Changes so far have been checked like 
 - FSR-mode inflation has no pressure limit.
 - Hold only stays steady if the pump doesn't leak air back.
 - `arduino-libraries/Stepper` is in `lib_deps` but isn't used.
-- Unfixed simulator and display issues in `index.html`:
-  - Dragging the slider doesn't update the loss.
-  - The loss box is overwritten while the simulation runs.
+- **The game is a placeholder.** It has no levels, sounds or difficulty setting, and its "Top of screen at" angle
+  is only as accurate as the angle calibration. The automatic cycle is timed, not closed-loop on angle or pressure.
+- Unfixed display issues in `index.html`:
   - The trend chart plots loss and pressure on the angle's 0–120 scale with no axes of their own. It's labelled
     "Last 30 seconds · 10 Hz" but holds 120 samples (12 s at 10 Hz, 24 s at 5 rows/s), added per update rather than
     per time step.
