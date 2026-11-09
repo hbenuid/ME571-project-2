@@ -8,10 +8,12 @@
     :root {
       --bg: #f5f5f3; --panel: #ffffff; --stage: #f8f8f6; --hover: #f0f0ed;
       --edge: #e3e3df; --field: #d4d4cf; --ink: #1b1b1a; --muted: #62615c;
-      --accent: #2a78d6; --accent-dark: #1f63b5; --ok: #1f9d55; --danger: #d03b3b;
+      --accent: #2a78d6; --accent-dark: #1f63b5; --accent-soft: #eaf1fb; --accent-soft-edge: #bcd3f0;
+      --ok: #1f9d55; --danger: #d03b3b; --warn: #b45309;
       --angle: #2a78d6; --loss: #1baf7a; --pressure: #eb6834;
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
     .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
     aside { padding: 24px 16px; background: var(--panel); border-right: 1px solid var(--edge); }
@@ -26,13 +28,24 @@
     .session { margin-top: 4px; }
     .session-row { display: flex; justify-content: space-between; margin: 8px 0; color: var(--muted); font-size: 13px; }
     .session-row b { color: var(--ink); font-weight: 500; }
-    main { padding: 28px 32px 40px; max-width: 1540px; width: 100%; margin: auto; }
-    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px; }
+    main { padding: 28px 32px 40px; max-width: 1540px; width: 100%; min-width: 0; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
     h1 { margin: 0 0 4px; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
     .subtitle { color: var(--muted); }
     .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; padding: 6px 0; }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
     .dot.off { background: var(--danger); }
+    .mode-bar { display: flex; gap: 16px; align-items: stretch; justify-content: space-between; margin-bottom: 16px; }
+    .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; flex: 1; max-width: 760px; padding: 4px; border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
+    .mode-tab { padding: 8px 12px; text-align: left; color: var(--muted); background: transparent; border-color: transparent; font-weight: 400; }
+    .mode-tab:hover:not(:disabled) { background: var(--hover); border-color: transparent; }
+    .mode-tab b { display: block; color: var(--ink); font-size: 14px; font-weight: 600; }
+    .mode-tab small { display: block; font-size: 12px; }
+    .mode-tab[aria-pressed="true"], .mode-tab[aria-pressed="true"]:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-soft-edge); }
+    .mode-tab[aria-pressed="true"] b { color: var(--accent-dark); }
+    .actuator { min-width: 200px; padding: 8px 14px; border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
+    .actuator small { display: block; color: var(--muted); font-size: 12px; }
+    .actuator b { display: block; margin-top: 2px; color: var(--ink); font-size: 16px; font-weight: 600; }
     .layout { display: grid; grid-template-columns: minmax(380px, 1.08fr) minmax(390px, .92fr); gap: 16px; }
     .panel { border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); overflow: hidden; }
     .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--edge); }
@@ -42,6 +55,18 @@
     .layout > .panel:first-child { display: flex; flex-direction: column; }
     .layout > .panel:first-child .finger-stage { flex: 1; height: auto; min-height: 442px; }
     #finger { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .game-layer { position: absolute; inset: 0; }
+    #game { display: block; width: 100%; height: 100%; }
+    .finger-stage:not(.game-on) .game-layer, .finger-stage.game-on #finger, .finger-stage.game-on .stage-legend { display: none; }
+    /* In the game the readouts sit in a strip along the bottom, below the ship's range. */
+    .game-hud { position: absolute; right: 16px; bottom: 12px; display: flex; gap: 8px; }
+    .game-hud span, .finger-stage.game-on .angle-badge { display: flex; gap: 8px; align-items: baseline; padding: 4px 10px; border-radius: 6px; background: var(--panel); border: 1px solid var(--edge); color: var(--muted); font-size: 12px; }
+    .game-hud b { color: var(--ink); font-size: 18px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .finger-stage.game-on .angle-badge { top: auto; left: 16px; bottom: 12px; }
+    .finger-stage.game-on .angle-badge strong { font-size: 18px; line-height: 1.2; }
+    .game-overlay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100% - 40px)); padding: 16px 20px; text-align: center; border-radius: 8px; background: var(--panel); border: 1px solid var(--edge); }
+    .game-overlay strong { display: block; margin-bottom: 4px; font-size: 18px; font-weight: 600; }
+    .game-overlay span { color: var(--muted); font-size: 13px; }
     .angle-badge { position: absolute; left: 18px; top: 18px; padding: 8px 12px; border-radius: 6px; background: var(--panel); border: 1px solid var(--edge); }
     .angle-badge small { display: block; color: var(--muted); font-size: 12px; }
     .angle-badge strong { display: block; color: var(--ink); font-size: 28px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
@@ -51,12 +76,12 @@
     .legend-dash { width: 20px; border-top: 2px dashed #a9a8a2; }
     .metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--edge); }
     .metric { padding: 14px 18px; }
-    .metric + .metric { border-left: 1px solid var(--edge); }
+    .metrics .metric + .metric { border-left: 1px solid var(--edge); }
     .metric-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
-    .metric-label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
-    .metric:nth-child(1) .metric-label::before { background: var(--loss); }
-    .metric:nth-child(2) .metric-label::before { background: var(--angle); }
-    .metric:nth-child(3) .metric-label::before { background: var(--pressure); }
+    .metrics .metric-label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+    .metrics .metric:nth-child(1) .metric-label::before { background: var(--loss); }
+    .metrics .metric:nth-child(2) .metric-label::before { background: var(--angle); }
+    .metrics .metric:nth-child(3) .metric-label::before { background: var(--pressure); }
     .metric-value { margin-top: 4px; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .metric-value small { color: var(--muted); font-size: 13px; font-weight: 400; }
     .chart-panel { grid-column: 1 / -1; }
@@ -69,51 +94,127 @@
     .control-group:last-child { border-bottom: 0; }
     .control-group:not(.full) + .control-group:not(.full) { border-left: 1px solid var(--edge); }
     .control-group.full { grid-column: 1/-1; }
-    input[type=range] { width: 100%; accent-color: var(--accent); margin: 12px 0 4px; }
     input[type=number], input[type=text], select { width: 100%; margin-top: 6px; padding: 8px 10px; color: var(--ink); background: #fff; border: 1px solid var(--field); border-radius: 6px; font: inherit; outline: none; }
     input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #2a78d626; }
-    .control-title { display: flex; justify-content: space-between; align-items: center; }
-    .control-title b { color: var(--ink); font-size: 16px; font-weight: 600; }
+    input:disabled { color: var(--muted); background: var(--hover); }
+    .control-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .control-title b { color: var(--ink); font-size: 14px; font-weight: 600; text-align: right; }
     .calibration { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
-    .calibration label { font-weight: 500; }
-    .calibration input { margin-top: 4px; }
+    .timings { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 10px; margin-top: 8px; }
+    .calibration label, .timings label, .source-row label, .capture-row label, .fit-options label { font-weight: 500; }
+    .calibration input, .timings input, .source-row label input { margin-top: 4px; }
+    .progress { height: 4px; margin-top: 14px; overflow: hidden; border-radius: 2px; background: var(--hover); }
+    .progress i { display: block; width: 0; height: 100%; background: var(--accent); }
+    .lead { margin: 10px 0 0; font-size: 13px; }
+    kbd { padding: 1px 6px; border: 1px solid var(--field); border-bottom-width: 2px; border-radius: 4px; background: #fff; color: var(--ink); font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
     button { border: 1px solid var(--accent); border-radius: 6px; padding: 8px 14px; cursor: pointer; color: #fff; background: var(--accent); font: inherit; font-weight: 600; }
     button:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
     button.secondary { color: var(--ink); background: #fff; border-color: var(--field); }
     button.secondary:hover:not(:disabled) { background: var(--hover); border-color: var(--field); }
     button.secondary.active, button.secondary.active:hover:not(:disabled) { color: #fff; background: var(--accent); border-color: var(--accent); }
     button:disabled { opacity: .5; cursor: default; }
-    .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+    .hold-btn { min-width: 130px; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
     .button-row .hint { margin: 0; }
-    .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
+    .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; align-items: end; }
     .source-row input { margin-top: 0; }
     .hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    .hint a { color: var(--accent); }
     code { color: var(--ink); background: var(--hover); padding: 1px 4px; border-radius: 4px; font-size: 12px; }
-    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 16px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
-    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .control-group:not(.full) + .control-group:not(.full) { border-left: 0; } .metric + .metric { border-left: 0; border-top: 1px solid var(--edge); } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } }
+    .view-tabs { display: none; gap: 4px; margin-bottom: 16px; }
+    .view-tabs a { flex: 1; padding: 8px 12px; border: 1px solid var(--edge); border-radius: 6px; color: var(--muted); background: var(--panel); text-align: center; text-decoration: none; }
+    .view-tabs a.active { color: var(--ink); background: var(--hover); }
+    /* Calibration view */
+    .cal-layout { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); grid-template-areas: "capture fit" "capture points" "code points"; gap: 16px; align-items: start; }
+    .cal-capture { grid-area: capture; } .cal-fit { grid-area: fit; } .cal-points { grid-area: points; } .cal-code { grid-area: code; }
+    .cal-layout .panel-head { flex-wrap: wrap; gap: 6px 14px; }
+    .cal-layout .metric { display: flex; flex-direction: column; justify-content: space-between; }
+    .steps { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+    .steps li { margin: 4px 0; }
+    .live-row { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 8px; }
+    .live-row .metric { padding: 2px 14px; }
+    .live-row .metric:first-child { padding-left: 0; }
+    .live-row .metric + .metric { border-left: 1px solid var(--edge); }
+    .live-row .metric-value { font-size: 20px; }
+    .capture-row { display: grid; grid-template-columns: 1fr 1.25fr auto; gap: 8px; align-items: end; }
+    .capture-row button { min-width: 92px; }
+    .hint.warn, .warnings { color: var(--warn); }
+    .fit-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 18px 0; color: var(--muted); font-size: 12px; }
+    .fit-legend span { display: inline-flex; gap: 7px; align-items: center; }
+    .key-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+    .key-hollow { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #a9a8a2; }
+    .key-dash { width: 20px; border-top: 2px dashed #a9a8a2; }
+    .key-live { width: 2px; height: 13px; background: var(--loss); }
+    .fit-wrap { position: relative; padding: 6px 12px 0; }
+    #fitChart { width: 100%; height: auto; display: block; }
+    #fitChart .axis-label { font-size: 11px; }
+    #fitChart .axis-title { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .chart-tip { position: absolute; z-index: 2; padding: 6px 10px; border: 1px solid var(--field); border-radius: 6px; color: var(--ink); background: var(--panel); font-size: 12px; line-height: 1.45; white-space: nowrap; pointer-events: none; transform: translate(-50%, calc(-100% - 12px)); }
+    .chart-tip span { color: var(--muted); }
+    .fit-options { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 18px; align-items: end; padding: 8px 18px 0; }
+    .fit-options select { margin-top: 6px; }
+    label.check { display: inline-flex; gap: 8px; align-items: center; padding-bottom: 9px; color: var(--ink); font-size: 13px; font-weight: 400; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .check input, td input { accent-color: var(--accent); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 16px; border-top: 1px solid var(--edge); }
+    .stats .metric { padding: 12px 18px; }
+    .stats .metric + .metric { border-left: 1px solid var(--edge); }
+    .warnings { margin: 0; padding: 12px 18px 16px; list-style: none; font-size: 12px; }
+    .warnings li { margin: 0 0 6px; }
+    .warnings li:before { content: "⚠ "; }
+    .warnings li.info { color: var(--muted); }
+    .warnings li.info:before { content: ""; }
+    .panel-body { padding: 16px 18px 18px; }
+    .panel-foot { padding: 4px 18px 18px; }
+    .panel-head button { padding: 4px 12px; }
+    .table-wrap { position: relative; overflow-x: auto; padding: 4px 10px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--edge); }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; }
+    th:first-child, td:first-child { text-align: left; }
+    td input { margin: 0 8px 0 0; vertical-align: -2px; }
+    tr.excluded td { color: var(--muted); }
+    tr.excluded td:nth-child(n+2):nth-child(-n+4) { text-decoration: line-through; }
+    tr.empty-row td { padding: 22px 8px; color: var(--muted); text-align: center; white-space: normal; }
+    button.icon { padding: 2px 8px; color: var(--muted); background: transparent; border-color: transparent; font-weight: 400; }
+    button.icon:hover:not(:disabled) { color: var(--danger); background: transparent; border-color: transparent; }
+    pre.snippet { margin: 0; padding: 12px 14px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); background: var(--stage); border: 1px solid var(--edge); border-radius: 6px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    @media (max-width: 1100px) { .cal-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "capture" "fit" "points" "code"; } }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 16px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } .view-tabs { display: flex; } }
+    @media (max-width: 720px) { .mode-bar { flex-direction: column; } .mode-tabs { max-width: none; } }
+    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .control-group:not(.full) + .control-group:not(.full) { border-left: 0; } .metrics .metric + .metric { border-left: 0; border-top: 1px solid var(--edge); } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } .mode-tab { padding: 8px 10px; } .mode-tab small { display: none; } .layout > .panel:first-child .finger-stage { min-height: 360px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats { grid-template-columns: 1fr 1fr; } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="app">
     <aside>
       <div class="brand"><div class="brand-mark">FS</div><div><strong>FLEXSENSE</strong><small>Rehabilitation Suite</small></div></div>
-      <nav><a class="active" href="#overview">◉ &nbsp; Live session</a><a href="#trends">⌁ &nbsp; Trends</a><a href="#calibration">⚙ &nbsp; Calibration</a></nav>
+      <nav id="sideNav"><a href="#overview">◉ &nbsp; Live session</a><a href="#trends">⌁ &nbsp; Trends</a><a href="#calibration">⚙ &nbsp; Calibration</a></nav>
       <span class="side-label">Session</span>
       <div class="session">
         <div class="session-row"><span>Patient</span><b>Demo patient</b></div>
-        <div class="session-row"><span>Exercise</span><b>Finger flexion</b></div>
+        <div class="session-row"><span>Exercise</span><b id="exerciseName">Automatic cycle</b></div>
         <div class="session-row"><span>Duration</span><b id="duration">00:00</b></div>
       </div>
     </aside>
     <main>
+      <nav class="view-tabs" aria-label="Views"><a href="#overview">Live session</a><a href="#calibration">Calibration</a></nav>
       <header id="overview">
-        <div><h1>Live session</h1><div class="subtitle">Optical finger-sleeve feedback for guided rehab exercises</div></div>
-        <div class="status" id="status"><i class="dot"></i><span>Simulation active</span></div>
+        <div><h1 id="viewTitle">Live session</h1><div class="subtitle" id="viewSubtitle">Optical finger-sleeve feedback for guided rehab exercises</div></div>
+        <div class="status" id="status"><i class="dot"></i><span>Simulator</span></div>
       </header>
-      <section class="layout">
+      <section class="mode-bar" id="modeBar" aria-label="Exercise mode">
+        <div class="mode-tabs" role="group" aria-label="Exercise mode">
+          <button class="mode-tab" type="button" data-mode="auto" aria-pressed="true"><b>Automatic</b><small>Timed bend and release</small></button>
+          <button class="mode-tab" type="button" data-mode="manual" aria-pressed="false"><b>Manual</b><small>Arrow keys move the finger</small></button>
+          <button class="mode-tab" type="button" data-mode="game" aria-pressed="false"><b>Game</b><small>Steer a ship with your finger</small></button>
+        </div>
+        <div class="actuator"><small>Actuator · <span id="actuatorSource">simulated</span></small><b id="actuatorText">Vented</b></div>
+      </section>
+      <section class="layout" id="liveView">
         <section class="panel">
-          <div class="panel-head"><h2>Articulated finger</h2><span>Right index · calibrated</span></div>
-          <div class="finger-stage">
+          <div class="panel-head"><h2 id="stageTitle">Articulated finger</h2><span id="stageNote">Right index · calibrated</span></div>
+          <div class="finger-stage" id="stage">
             <svg id="finger" viewBox="0 0 700 420" role="img" aria-label="Animated virtual finger showing bend angle">
               <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
               <path d="M92 220 C180 203 255 211 330 221" stroke="#000" stroke-width="28" stroke-linecap="round" opacity=".05"/>
@@ -127,37 +228,58 @@
               <text id="arcLabel" fill="#1b1b1a" font-size="13" font-weight="700"></text>
               <text x="54" y="196" fill="#8a8984" font-size="12">wrist</text><text x="553" y="215" fill="#8a8984" font-size="12">fingertip</text>
             </svg>
-            <div class="angle-badge"><small>Live bend angle</small><strong><span id="angleReadout">42</span>°</strong></div>
+            <div class="game-layer">
+              <canvas id="game" aria-label="Spaceship game. The ship's height follows the finger's bend angle."></canvas>
+              <div class="game-hud"><span>Score<b id="scoreText">0</b></span><span>Best<b id="bestText">0</b></span></div>
+              <div class="game-overlay" id="gameOverlay"><strong id="overlayTitle">Spaceship game</strong><span id="overlayText"></span></div>
+            </div>
+            <div class="angle-badge"><small id="angleLabel">Live bend angle</small><strong><span id="angleReadout">0</span>°</strong></div>
             <div class="stage-legend"><span><i class="legend-line"></i> optical sleeve signal</span><span><i class="legend-dash"></i> neutral alignment</span></div>
           </div>
           <div class="metrics">
-            <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">2.84</span> <small>dB</small></div></div>
-            <div class="metric"><div class="metric-label">Bending angle</div><div class="metric-value"><span id="metricAngle">42</span> <small>deg</small></div></div>
-            <div class="metric"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">8.6</span> <small>PSI</small></div></div>
+            <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">0.00</span> <small>dB</small></div></div>
+            <div class="metric"><div class="metric-label">Bending angle</div><div class="metric-value"><span id="metricAngle">0</span> <small>deg</small></div></div>
+            <div class="metric"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">0.0</span> <small>PSI</small></div></div>
           </div>
         </section>
-        <section class="panel" id="calibration">
-          <div class="panel-head"><h2>Hardware input & calibration</h2><span id="inputMode">Manual simulator</span></div>
+        <section class="panel" id="hardware">
+          <div class="panel-head"><h2>Controls</h2><span id="inputMode">Simulator</span></div>
           <div class="controls">
-            <div class="control-group full">
-              <div class="control-title"><label for="angleSlider">Bending angle</label><b><span id="sliderValue">42</span>°</b></div>
-              <input id="angleSlider" type="range" min="0" max="120" value="42">
-              <div class="button-row"><button id="simulateBtn">Pause simulation</button><button class="secondary" id="neutralBtn">Set neutral</button></div>
+            <div class="control-group full mode-panel" data-panel="auto">
+              <div class="control-title"><label>Automatic cycle</label><b id="autoStatus">Ready</b></div>
+              <div class="timings">
+                <label>Inflate (s)<input id="autoInflate" type="number" min="0.5" max="60" step="0.5" value="3"></label>
+                <label>Hold (s)<input id="autoHold" type="number" min="0" max="60" step="0.5" value="2"></label>
+                <label>Vent (s)<input id="autoVent" type="number" min="0.5" max="60" step="0.5" value="3"></label>
+                <label>Rest (s)<input id="autoRest" type="number" min="0" max="60" step="0.5" value="2"></label>
+                <label>Reps<input id="autoReps" type="number" min="1" max="100" step="1" value="10"></label>
+              </div>
+              <div class="progress" aria-hidden="true"><i id="autoProgress"></i></div>
+              <div class="button-row"><button id="autoStartBtn" type="button">Start</button><button class="secondary" id="autoStopBtn" type="button" disabled>Stop and vent</button></div>
+              <p class="hint">Each rep inflates, holds, vents and rests for these times. Inflation still stops at the pressure limit in <code>src/main.cpp</code>. Pressing the FSR vents straight away and ends the cycle.</p>
             </div>
-            <div class="control-group"><label for="pressureInput">Bladder pressure (PSI)</label><input id="pressureInput" type="number" min="0" max="30" step=".1" value="8.6"></div>
-            <div class="control-group"><label for="lossInput">Measured optical loss (dB)</label><input id="lossInput" type="number" min="0" max="30" step=".01" value="2.84"></div>
-            <div class="control-group full"><label>Simulator loss model</label>
+            <div class="control-group full mode-panel" data-panel="manual" hidden>
+              <div class="control-title"><label>Manual control</label><b id="manualStatus">No key held</b></div>
+              <p class="lead">Hold <kbd>↑</kbd> to bend the finger and <kbd>↓</kbd> to straighten it. Let go to hold the position.</p>
+              <div class="button-row"><button class="secondary hold-btn" id="bendBtn" type="button">▲ Bend</button><button class="secondary hold-btn" id="straightenBtn" type="button">▼ Straighten</button></div>
+              <p class="hint">The buttons work the same way: press and hold. Bend runs the pump and Straighten opens the exhaust. Inflation stops at the pressure limit in <code>src/main.cpp</code>, and pressing the FSR vents straight away.</p>
+            </div>
+            <div class="control-group full mode-panel" data-panel="game" hidden>
+              <div class="control-title"><label>Spaceship game</label><b id="gameStatus">Ready</b></div>
+              <p class="lead">Bend your finger to fly up and straighten it to fly down. Dodge the asteroids.</p>
+              <div class="source-row"><label>Top of screen at (deg)<input id="gameTopAngle" type="number" min="10" max="120" step="5" value="90"></label><button id="gameStartBtn" type="button">Start game</button></div>
+              <p class="hint">The bladder stays vented, so the finger moves under its own effort. <kbd>Space</kbd> also starts the game. Without an Arduino, hold <kbd>↑</kbd> and <kbd>↓</kbd> to move the simulated finger.</p>
+            </div>
+            <div class="control-group full"><label>Simulator model</label>
               <div class="calibration"><label>Baseline loss (dB)<input id="baseInput" type="number" step=".01" value="0.50"></label><label>Sensitivity (dB/deg)<input id="sensitivityInput" type="number" step=".001" value=".055"></label><label>Neutral angle (deg)<input id="neutralInput" type="number" step="1" value="0"></label></div>
-              <p class="hint">The simulator generates loss as <code>L = L₀ + k (θ − θ₀)</code>. When the Arduino is connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead.</p>
+              <p class="hint">Without an Arduino, a simulated bladder answers the same commands as the real one. It fills at 0.8 psi/s up to 3 psi and bends the finger 30° per psi, and its loss is <code>L = L₀ + k (θ − θ₀)</code>. With the Arduino connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead. Make that fit on the <a href="#calibration">Calibration</a> page.</p>
             </div>
             <div class="control-group full"><label for="connectBtn">Arduino over USB</label>
-              <div class="button-row"><button id="connectBtn">Connect to Arduino</button><span class="hint" id="serialStatus"></span></div>
-              <p class="hint">Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight.</p>
-              <div class="button-row"><button class="secondary" id="inflateBtn" disabled>Inflate</button><button class="secondary" id="holdBtn" disabled>Hold</button><button class="secondary" id="ventBtn" disabled>Vent</button><span class="hint" id="controlMode"></span></div>
-              <p class="hint">Inflate runs the pump until you press Hold or Vent, or until the pressure limit set in <code>src/main.cpp</code>. Pressing the FSR vents straight away. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
+              <div class="button-row"><button class="connect-btn" id="connectBtn" type="button">Connect to Arduino</button><span class="hint serial-status"></span></div>
+              <p class="hint">Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
             </div>
             <div class="control-group full"><label for="trialInput">Recording</label>
-              <div class="source-row"><input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3, 50% grip"><button id="downloadBtn" disabled>Download CSV</button></div>
+              <div class="source-row"><input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3, 50% grip"><button id="downloadBtn" type="button" disabled>Download CSV</button></div>
               <p class="hint" id="recordStatus">Records everything the Arduino sends, from Connect to Disconnect. The trial name goes in the file name and in every row.</p>
             </div>
           </div>
@@ -167,13 +289,92 @@
           <div class="chart-wrap"><svg id="chart" viewBox="0 0 900 242" preserveAspectRatio="none" aria-label="Live sensor trend chart"></svg></div>
         </section>
       </section>
+      <section class="cal-layout" id="calibration" hidden>
+        <section class="panel cal-capture">
+          <div class="panel-head"><h2>Capture points</h2><span id="calInput">Arduino not connected</span></div>
+          <div class="controls">
+            <div class="control-group full"><label>How to calibrate</label>
+              <ol class="steps">
+                <li>Connect with the finger straight and the bladder empty. The sketch zeros the optical loss as it starts.</li>
+                <li>Capture 0° first. Then bend the finger to angles across the range you'll use, by hand or with Inflate and Hold.</li>
+                <li>At each bend, measure the angle with a protractor, type it in and press Capture. Hold still while it averages.</li>
+                <li>6 to 10 points spread over the range is plenty. Capturing 0° again at the end shows whether the reading drifted.</li>
+                <li>Copy the coefficients into <code>src/main.cpp</code> and upload.</li>
+              </ol>
+            </div>
+            <div class="control-group full"><label>Arduino over USB</label>
+              <div class="button-row"><button class="connect-btn">Connect to Arduino</button><span class="hint serial-status"></span></div>
+              <div class="button-row"><button class="secondary" data-command="I" disabled>Inflate</button><button class="secondary" data-command="H" disabled>Hold</button><button class="secondary" data-command="V" disabled>Vent</button><span class="hint control-mode"></span></div>
+            </div>
+            <div class="control-group full"><label>Live reading</label>
+              <div class="live-row">
+                <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="calLoss">--</span> <small>dB</small></div></div>
+                <div class="metric"><div class="metric-label">Sketch angle</div><div class="metric-value"><span id="calSketchAngle">--</span> <small>deg</small></div></div>
+                <div class="metric"><div class="metric-label">New fit angle</div><div class="metric-value"><span id="calFitAngle">--</span> <small>deg</small></div></div>
+              </div>
+              <p class="hint" id="calRangeHint"></p>
+            </div>
+            <div class="control-group full">
+              <div class="capture-row">
+                <label>Measured angle (°)<input id="calAngleInput" type="number" step="0.5" placeholder="e.g. 45"></label>
+                <label>Average over<select id="calRowsSelect"><option value="5">5 rows, about 1 s</option><option value="10" selected>10 rows, about 2 s</option><option value="25">25 rows, about 5 s</option></select></label>
+                <button id="captureBtn" disabled>Capture</button>
+              </div>
+              <p class="hint" id="captureStatus">Connect to the Arduino to capture points.</p>
+            </div>
+          </div>
+        </section>
+        <section class="panel cal-fit">
+          <div class="panel-head"><h2>Angle against optical loss</h2><span id="fitEquation">No fit yet</span></div>
+          <div class="fit-legend"><span><i class="key-dot"></i> Measured points</span><span><i class="legend-line"></i> New fit</span><span><i class="key-dash"></i> Current sketch</span><span><i class="key-live"></i> Live loss</span><span><i class="key-hollow"></i> Left out</span></div>
+          <div class="fit-wrap"><svg id="fitChart" viewBox="0 0 640 380" role="img" aria-label="Measured bend angle against optical loss, with the fitted curve"></svg><div class="chart-tip" id="fitTip" hidden></div></div>
+          <div class="fit-options">
+            <label>Fit<select id="fitModel"><option value="quadratic">Quadratic, as in the sketch</option><option value="linear">Linear</option></select></label>
+            <label class="check"><input type="checkbox" id="fitZero"> Force 0° at 0 dB</label>
+          </div>
+          <div class="stats">
+            <div class="metric"><div class="metric-label">Points used</div><div class="metric-value" id="statPoints">0</div></div>
+            <div class="metric"><div class="metric-label">New fit RMS error</div><div class="metric-value"><span id="statRmse">--</span> <small>deg</small></div></div>
+            <div class="metric"><div class="metric-label">New fit max error</div><div class="metric-value"><span id="statMax">--</span> <small>deg</small></div></div>
+            <div class="metric"><div class="metric-label">Sketch RMS error</div><div class="metric-value"><span id="statSketch">--</span> <small>deg</small></div></div>
+          </div>
+          <ul class="warnings" id="fitWarnings"></ul>
+        </section>
+        <section class="panel cal-points">
+          <div class="panel-head"><h2>Calibration points</h2><span id="pointCount">None yet</span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Use · #</th><th>Measured (°)</th><th>Loss (dB)</th><th>Spread (dB)</th><th>Sketch (°)</th><th>New fit (°)</th><th>Error (°)</th><th><span class="sr-only">Remove</span></th></tr></thead>
+            <tbody id="pointRows"></tbody>
+          </table></div>
+          <div class="panel-foot">
+            <div class="button-row"><button class="secondary" id="exportPointsBtn" disabled>Download points CSV</button><button class="secondary" id="clearPointsBtn" disabled>Clear all</button></div>
+            <p class="hint">Spread is the standard deviation of the loss while it averaged. Untick a point to leave it out of the fit. Points stay in this browser until you clear them.</p>
+          </div>
+        </section>
+        <section class="panel cal-code">
+          <div class="panel-head"><h2>Paste into src/main.cpp</h2><button class="secondary" id="copyBtn" disabled>Copy</button></div>
+          <div class="panel-body">
+            <pre class="snippet" id="snippet"></pre>
+            <p class="hint">In <code>src/main.cpp</code>, replace the lines from <code>// Angle calibration</code> down to <code>ANGLE_C</code> with this block, then run <code>pio run -t upload</code>. The dashboard needs no change.</p>
+          </div>
+        </section>
+      </section>
     </main>
   </div>
   <script>
     const $ = id => document.getElementById(id);
-    const state = { angle: 42, pressure: 8.6, loss: 2.84, running: true, connected: false, started: Date.now(), history: [] };
+    const all = selector => document.querySelectorAll(selector);
+    const state = { angle: 0, pressure: 0, loss: 0, connected: false, ready: false, arduinoMode: '', started: Date.now(), history: [] };
     const MAX_SAMPLES = 120;
     const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const setText = (id, text) => { if ($(id).textContent !== String(text)) $(id).textContent = text; };
+
+    // Settings this browser remembers. Storage can be missing or blocked, so every access is guarded.
+    const store = {
+      get(key, fallback) { try { const value = localStorage.getItem(`flexsense.${key}`); return value === null ? fallback : JSON.parse(value); } catch { return fallback; } },
+      set(key, value) { try { localStorage.setItem(`flexsense.${key}`, JSON.stringify(value)); } catch {} },
+    };
+
     function lossFromAngle(angle) {
       const base = Number($('baseInput').value) || 0;
       const sensitivity = Number($('sensitivityInput').value) || .055;
@@ -185,10 +386,8 @@
       if (Number.isFinite(next.pressure)) state.pressure = clamp(next.pressure, 0, 30);
       if (Number.isFinite(next.loss)) state.loss = Math.max(0, next.loss);
       else if (!fromHardware) state.loss = lossFromAngle(state.angle);  // don't invent a measured loss for hardware rows
-      $('angleSlider').value = state.angle; $('sliderValue').textContent = Math.round(state.angle);
-      $('angleReadout').textContent = Math.round(state.angle); $('metricAngle').textContent = Math.round(state.angle);
-      $('pressureReadout').textContent = state.pressure.toFixed(1); $('lossReadout').textContent = state.loss.toFixed(2);
-      if (!fromHardware) $('lossInput').value = state.loss.toFixed(2);
+      setText('angleReadout', Math.round(state.angle)); setText('metricAngle', Math.round(state.angle));
+      setText('pressureReadout', state.pressure.toFixed(1)); setText('lossReadout', state.loss.toFixed(2));
       drawFinger(state.angle); addSample();
     }
     function point(x, y, length, degrees) {
@@ -228,55 +427,393 @@
       html += `<g transform="translate(${W-310},8)"><line x1="0" x2="18" y1="4" y2="4" stroke="#2a78d6" stroke-width="3"/><text class="axis-label" x="24" y="8">Angle (°)</text><line x1="83" x2="101" y1="4" y2="4" stroke="#1baf7a" stroke-width="3"/><text class="axis-label" x="107" y="8">Loss (dB)</text><line x1="174" x2="192" y1="4" y2="4" stroke="#eb6834" stroke-width="3"/><text class="axis-label" x="198" y="8">Pressure (PSI)</text></g>`;
       chart.innerHTML = html;
     }
-    function tick() {
-      if (state.running && !state.connected) {
-        const t = Date.now()/1000;
-        const angle = 42 + Math.sin(t * .9) * 25 + Math.sin(t * .31) * 9;
-        setData({angle, pressure: 5.2 + angle*.08 + Math.sin(t*1.7)*.4});
-      }
-      const elapsed = Math.floor((Date.now()-state.started)/1000); $('duration').textContent = `${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`;
-    }
     function showStatus() {
-      const text = state.connected ? 'Arduino connected' : state.running ? 'Simulation active' : 'Simulation paused';
-      $('status').innerHTML = `<i class="dot ${state.connected || state.running ? '' : 'off'}"></i><span>${text}</span>`;
+      $('status').innerHTML = `<i class="dot"></i><span>${state.connected ? 'Arduino connected' : 'Simulator'}</span>`;
     }
-    function pauseSimulation() { state.running = false; $('simulateBtn').textContent = 'Resume simulation'; showStatus(); }
-    $('angleSlider').addEventListener('input', e => { pauseSimulation(); setData({angle:Number(e.target.value), loss:Number($('lossInput').value)}); });
-    $('pressureInput').addEventListener('input', e => setData({pressure:Number(e.target.value), loss:Number($('lossInput').value)}));
-    $('lossInput').addEventListener('input', e => setData({loss:Number(e.target.value)}));
-    ['baseInput','sensitivityInput','neutralInput'].forEach(id => $(id).addEventListener('change', () => { if (!state.connected) setData({loss:lossFromAngle(state.angle)}); }));
-    $('simulateBtn').addEventListener('click', () => { state.running = !state.running; $('simulateBtn').textContent = state.running ? 'Pause simulation' : 'Resume simulation'; showStatus(); });
-    $('neutralBtn').addEventListener('click', () => { setData({angle:0}); pauseSimulation(); });
 
-    // Arduino over USB (Web Serial API: Chrome, Edge, Firefox 151+). src/main.cpp prints a
-    // whitespace-separated table; its header row names the columns.
-    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
-    let columns = DEFAULT_COLUMNS, serialReader = null, serialWriter = null;
-    let userDisconnect = false;  // set when Disconnect is clicked, so any other end of the connection reads as lost
-
-    // Pump control. The sketch takes single characters: I inflate, H hold, V vent,
+    // Pump commands. The sketch takes single characters: I inflate, H hold, V vent,
     // K keep-alive (it vents if none arrive for 1.5 s), X hand control back to the FSR.
+    // drive() sends I, H or V to the Arduino when one is connected, or to the simulator.
     const encoder = new TextEncoder();
     const MODE_TEXT = { FSR: 'FSR in control', INFL: 'Inflating', HOLD: 'Holding', VENT: 'Venting', STOP: 'Stopped by the FSR, vented', MAX: 'At the pressure limit, holding' };
-    const CONTROL_BUTTONS = { inflateBtn: 'INFL', holdBtn: 'HOLD', ventBtn: 'VENT' };
+    const COMMAND_SETTLE_MS = 400;  // rows received sooner than this after a command may predate it
+    let serialWriter = null, lastDriveMs = -Infinity;
 
     function sendCommand(command) {
       return serialWriter ? serialWriter.write(encoder.encode(command)).catch(() => {}) : Promise.resolve();
     }
+    const canDrive = () => !state.connected || state.ready;  // not during the sketch's startup vent
+    function drive(command) {
+      if (!canDrive()) return;
+      if (state.connected) sendCommand(command); else simCommand(command);
+      lastDriveMs = performance.now();
+      showActuator();
+    }
+    // The calibration view's Inflate, Hold and Vent buttons. Each one's data-command is the character it sends.
+    const CONTROL_BUTTONS = { I: 'INFL', H: 'HOLD', V: 'VENT' };  // command -> Mode label it lights up for
     function showArduinoMode(mode) {
-      $('controlMode').textContent = mode ? (MODE_TEXT[mode] || mode) : '';
-      for (const [id, buttonMode] of Object.entries(CONTROL_BUTTONS)) $(id).classList.toggle('active', mode === buttonMode);
+      all('.control-mode').forEach(el => { el.textContent = mode ? (MODE_TEXT[mode] || mode) : ''; });
+      all('[data-command]').forEach(button => button.classList.toggle('active', mode === CONTROL_BUTTONS[button.dataset.command]));
     }
     function enableControls(enabled) {
-      for (const id of Object.keys(CONTROL_BUTTONS)) $(id).disabled = !enabled;
+      all('[data-command]').forEach(button => { button.disabled = !enabled; });
     }
-    $('inflateBtn').addEventListener('click', () => sendCommand('I'));
-    $('holdBtn').addEventListener('click', () => sendCommand('H'));
-    $('ventBtn').addEventListener('click', () => sendCommand('V'));
+    all('[data-command]').forEach(button => button.addEventListener('click', () => drive(button.dataset.command)));
+
+    function showActuator() {
+      const mode = state.connected ? state.arduinoMode : sim.mode;
+      const text = !mode ? 'Starting up' : mode === 'VENT' && state.pressure < .05 ? 'Vented' : MODE_TEXT[mode] || mode;
+      setText('actuatorText', text);
+      setText('actuatorSource', state.connected ? 'Arduino' : 'simulated');
+    }
+
+    // Simulator: a bladder that answers I, H and V like the sketch does. In the
+    // game the bladder is vented and the arrow keys stand in for the patient's own effort.
+    const SIM = { MAX_PSI: 3, FILL_PSI_PER_S: .8, VENT_TIME_S: .5, DEG_PER_PSI: 30, LAG_S: .25, EFFORT_DEG_PER_S: 80 };  // MAX_PSI mirrors MAX_DASHBOARD_PSI
+    const sim = { mode: 'VENT', pressure: 0, angle: 0, lastMs: performance.now() };
+    function simCommand(command) {
+      sim.mode = command === 'I' ? (sim.pressure < SIM.MAX_PSI ? 'INFL' : 'MAX') : command === 'H' ? 'HOLD' : 'VENT';
+    }
+    function simStep() {
+      const now = performance.now(), dt = Math.min(.5, (now - sim.lastMs) / 1000);
+      sim.lastMs = now;
+      if (sim.mode === 'INFL') {
+        sim.pressure += SIM.FILL_PSI_PER_S * dt;
+        if (sim.pressure >= SIM.MAX_PSI) { sim.pressure = SIM.MAX_PSI; sim.mode = 'MAX'; }
+      } else if (sim.mode === 'VENT') {
+        sim.pressure *= Math.exp(-dt / SIM.VENT_TIME_S);
+      }
+      if (exercise === 'game') {
+        const direction = topKey() === 'up' ? 1 : topKey() === 'down' ? -1 : 0;
+        sim.angle = clamp(sim.angle + direction * SIM.EFFORT_DEG_PER_S * dt, 0, 120);
+      } else {
+        sim.angle += (sim.pressure * SIM.DEG_PER_PSI - sim.angle) * (1 - Math.exp(-dt / SIM.LAG_S));
+      }
+      setData({ angle: sim.angle, pressure: sim.pressure });
+      showActuator();
+    }
+
+    // Exercise modes
+    const EXERCISE_NAMES = { auto: 'Automatic cycle', manual: 'Manual', game: 'Spaceship game' };
+    let exercise = 'auto';
+    function setExercise(next, initial = false) {
+      if (!EXERCISE_NAMES[next]) next = 'auto';
+      if (!initial) {
+        if (next === exercise) return;
+        stopAuto('Stopped: you switched modes');
+        releaseAllKeys(true);
+        if (game.status !== 'ready') resetGame();
+        // Leave the bladder vented, unless the FSR is in charge and the page never took control.
+        if (!state.connected || (state.ready && state.arduinoMode !== 'FSR')) drive('V');
+      }
+      exercise = next;
+      store.set('exercise', next);
+      document.querySelectorAll('.mode-tab').forEach(tab => tab.setAttribute('aria-pressed', String(tab.dataset.mode === next)));
+      document.querySelectorAll('.mode-panel').forEach(panel => { panel.hidden = panel.dataset.panel !== next; });
+      const gameOn = next === 'game';
+      $('stage').classList.toggle('game-on', gameOn);
+      $('stageTitle').textContent = gameOn ? 'Spaceship game' : 'Articulated finger';
+      $('stageNote').textContent = gameOn ? 'Bend to fly up · straighten to fly down' : 'Right index · calibrated';
+      $('angleLabel').textContent = gameOn ? 'Angle' : 'Live bend angle';
+      $('exerciseName').textContent = EXERCISE_NAMES[next];
+      runGameLoop(gameOn);
+      refreshControls();
+    }
+    document.querySelectorAll('.mode-tab').forEach(tab => tab.addEventListener('click', () => setExercise(tab.dataset.mode)));
+
+    function refreshControls() {
+      const ready = canDrive();
+      $('autoStartBtn').disabled = auto.running || !ready;
+      $('autoStopBtn').disabled = !auto.running;
+      for (const [id] of Object.values(AUTO_INPUTS)) $(id).disabled = auto.running;
+      $('bendBtn').disabled = $('straightenBtn').disabled = !ready;
+      $('gameStartBtn').disabled = game.status === 'playing' || !ready;
+    }
+
+    // Automatic mode: timed inflate, hold, vent and rest phases, repeated.
+    // Phases follow the clock, and step on every data row as well as the timer,
+    // so a throttled background tab doesn't stretch them while the Arduino is connected.
+    const PHASES = [
+      { key: 'inflate', command: 'I', label: 'Inflate', text: 'Inflating' },
+      { key: 'hold', command: 'H', label: 'Hold', text: 'Holding' },
+      { key: 'vent', command: 'V', label: 'Vent', text: 'Venting' },
+      { key: 'rest', command: 'V', label: 'Rest', text: 'Resting' },
+    ];
+    const AUTO_INPUTS = { inflate: ['autoInflate', .5, 60], hold: ['autoHold', 0, 60], vent: ['autoVent', .5, 60], rest: ['autoRest', 0, 60], reps: ['autoReps', 1, 100] };
+    let auto = { running: false, message: 'Ready' };
+
+    function readAutoSettings() {
+      const settings = {};
+      for (const [key, [id, min, max]] of Object.entries(AUTO_INPUTS)) {
+        let value = parseFloat($(id).value);
+        if (!Number.isFinite(value)) value = parseFloat($(id).defaultValue);
+        value = clamp(key === 'reps' ? Math.round(value) : value, min, max);
+        $(id).value = value;
+        settings[key] = value;
+      }
+      store.set('auto', settings);
+      return settings;
+    }
+    function startAuto() {
+      if (auto.running || !canDrive()) return;
+      const settings = readAutoSettings(), now = performance.now();
+      auto = { running: true, settings, rep: 1, phase: 0, phaseStart: now, phaseEnd: now + settings.inflate * 1000 };
+      drive('I');
+      showAuto(now); refreshControls();
+    }
+    function stopAuto(message, vent = true) {
+      if (!auto.running) return;
+      auto = { running: false, message };
+      if (vent) drive('V');
+      showAuto(); refreshControls();
+    }
+    function stepAuto(now) {
+      if (!auto.running) return;
+      const { settings } = auto;
+      let changed = false;
+      while (now >= auto.phaseEnd) {  // zero-length phases are skipped
+        auto.phase += 1;
+        if (auto.phase === PHASES.length) {
+          auto.phase = 0;
+          auto.rep += 1;
+          if (auto.rep > settings.reps) { stopAuto(`Done · ${settings.reps} ${settings.reps === 1 ? 'rep' : 'reps'}`); return; }
+        }
+        auto.phaseStart = auto.phaseEnd;
+        auto.phaseEnd = auto.phaseStart + settings[PHASES[auto.phase].key] * 1000;
+        changed = true;
+      }
+      if (changed) drive(PHASES[auto.phase].command);
+      showAuto(now);
+    }
+    function showAuto(now = performance.now()) {
+      if (!auto.running) { setText('autoStatus', auto.message); $('autoProgress').style.width = '0%'; return; }
+      const phase = PHASES[auto.phase], left = Math.max(0, (auto.phaseEnd - now) / 1000), span = auto.phaseEnd - auto.phaseStart;
+      setText('autoStatus', `Rep ${auto.rep} of ${auto.settings.reps} · ${phase.text} · ${left.toFixed(1)} s`);
+      $('autoProgress').style.width = `${span > 0 ? clamp((now - auto.phaseStart) / span, 0, 1) * 100 : 100}%`;
+    }
+    $('autoStartBtn').addEventListener('click', startAuto);
+    $('autoStopBtn').addEventListener('click', () => stopAuto('Stopped'));
+    for (const [id] of Object.values(AUTO_INPUTS)) $(id).addEventListener('change', readAutoSettings);
+
+    // Manual mode: hold Up to inflate, hold Down to vent, let go to hold.
+    // The last key pressed wins while both are down. In the game, without an
+    // Arduino, the same keys move the simulated finger directly.
+    const ARROWS = { ArrowUp: 'up', ArrowDown: 'down' };
+    let heldKeys = [];
+    const topKey = () => heldKeys[heldKeys.length - 1];
+    const keysActive = () => exercise === 'manual' ? canDrive() : exercise === 'game' && !state.connected;
+
+    function pressKey(key) {
+      if (heldKeys.includes(key) || !keysActive()) return;
+      heldKeys.push(key);
+      applyKeys();
+    }
+    function releaseKey(key) {
+      if (!heldKeys.includes(key)) return;
+      heldKeys = heldKeys.filter(k => k !== key);
+      applyKeys();
+    }
+    // silent: forget the keys without sending Hold, e.g. after the FSR stop has already vented.
+    function releaseAllKeys(silent = false) {
+      if (!heldKeys.length) return;
+      heldKeys = [];
+      if (silent) showKeys(); else applyKeys();
+    }
+    function applyKeys() {
+      if (exercise === 'manual') drive(topKey() === 'up' ? 'I' : topKey() === 'down' ? 'V' : 'H');
+      showKeys();
+    }
+    function showKeys() {
+      $('bendBtn').classList.toggle('active', topKey() === 'up');
+      $('straightenBtn').classList.toggle('active', topKey() === 'down');
+      setText('manualStatus', topKey() === 'up' ? 'Bending' : topKey() === 'down' ? 'Straightening' : 'No key held');
+    }
+
+    const isTyping = target => target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]');
+    window.addEventListener('keydown', event => {
+      if (isTyping(event.target) || event.ctrlKey || event.metaKey || event.altKey || !$('calibration').hidden) return;
+      if (exercise === 'game' && event.key === ' ') {
+        event.preventDefault();
+        if (!event.repeat) startGame();
+        return;
+      }
+      const key = ARROWS[event.key];
+      if (!key || exercise === 'auto') return;
+      event.preventDefault();  // don't scroll the page
+      if (!event.repeat) pressKey(key);
+    });
+    window.addEventListener('keyup', event => { const key = ARROWS[event.key]; if (key) releaseKey(key); });
+    // A key released in another window never sends keyup, so stop when the page loses focus.
+    window.addEventListener('blur', () => releaseAllKeys());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAllKeys(); });
+
+    for (const [id, key] of [['bendBtn', 'up'], ['straightenBtn', 'down']]) {
+      const button = $(id);
+      button.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        button.setPointerCapture(event.pointerId);
+        pressKey(key);
+      });
+      for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, () => releaseKey(key));
+      button.addEventListener('contextmenu', event => event.preventDefault());  // long press on touch screens
+    }
+
+    // Game mode: a side-scrolling ship whose height follows the bend angle.
+    const SHIP = { x: .16, top: 26, bottom: 74, radius: 13 };  // bottom leaves room for the readout strip
+    const game = { status: 'ready', score: 0, best: 0, rocks: [], stars: [], shipY: null, shipVy: 0, elapsed: 0, spawnIn: 0, lastMs: 0, frame: 0 };
+    const canvas = $('game'), ctx = canvas.getContext('2d');
+    let view = { w: 0, h: 0, dpr: 1 };
+
+    function gameTopAngle() {
+      const value = parseFloat($('gameTopAngle').value);
+      return Number.isFinite(value) ? clamp(value, 10, 120) : 90;
+    }
+    $('gameTopAngle').addEventListener('change', () => { const value = gameTopAngle(); $('gameTopAngle').value = value; store.set('gameTop', value); });
+
+    function startGame() {
+      if (exercise !== 'game' || game.status === 'playing' || !canDrive()) return;
+      Object.assign(game, { status: 'playing', score: 0, rocks: [], elapsed: 0, spawnIn: .8 });
+      drive('V');  // the finger moves under the patient's own effort
+      showGame(); refreshControls();
+    }
+    function endGame() {
+      game.status = 'over';
+      if (game.score > game.best) { game.best = game.score; store.set('best', game.best); }
+      showGame(); refreshControls();
+    }
+    function resetGame() {
+      Object.assign(game, { status: 'ready', score: 0, rocks: [] });
+      showGame(); refreshControls();
+    }
+    function showGame() {
+      setText('scoreText', game.score); setText('bestText', game.best);
+      const overlay = {
+        ready: ['Spaceship game', 'Bend your finger to fly up and straighten it to fly down. Press Start game or Space.'],
+        over: ['Game over', `Score ${game.score}. Press Play again or Space.`],
+      }[game.status];
+      $('gameOverlay').hidden = !overlay;
+      if (overlay) { setText('overlayTitle', overlay[0]); setText('overlayText', overlay[1]); }
+      setText('gameStatus', game.status === 'playing' ? `Playing · score ${game.score}` : game.status === 'over' ? `Game over · score ${game.score}` : 'Ready');
+      setText('gameStartBtn', game.status === 'over' ? 'Play again' : 'Start game');
+    }
+    $('gameStartBtn').addEventListener('click', startGame);
+
+    function sizeCanvas() {
+      const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+      if (w === view.w && h === view.h && dpr === view.dpr) return;
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      view = { w, h, dpr };
+      game.stars = Array.from({ length: 70 }, () => ({ x: Math.random() * w, y: Math.random() * h, z: .25 + Math.random() * .75 }));
+    }
+    const angleToY = angle => view.h - SHIP.bottom - clamp(angle / gameTopAngle(), 0, 1) * (view.h - SHIP.top - SHIP.bottom);
+    const rockSpeed = () => Math.min(340, 150 + 6 * game.elapsed);  // px/s, speeding up over time
+
+    function makeRock() {
+      const r = 12 + Math.random() * 16;
+      const points = Array.from({ length: 9 }, (_, i) => ({ a: i / 9 * Math.PI * 2, d: r * (.72 + Math.random() * .3) }));
+      return { x: view.w + r, y: SHIP.top + Math.random() * (view.h - SHIP.top - SHIP.bottom), r, points, spin: 0, spinRate: (Math.random() - .5) * 2, speed: .85 + Math.random() * .3, passed: false };
+    }
+    function updateRocks(dt) {
+      game.elapsed += dt;
+      game.spawnIn -= dt;
+      if (game.spawnIn <= 0) { game.rocks.push(makeRock()); game.spawnIn = Math.max(.55, 1.4 - .025 * game.elapsed); }
+      const shipX = view.w * SHIP.x;
+      for (const rock of game.rocks) {
+        rock.x -= rockSpeed() * rock.speed * dt;
+        rock.spin += rock.spinRate * dt;
+        if (Math.hypot(rock.x - shipX, rock.y - game.shipY) < rock.r * .85 + SHIP.radius) { endGame(); return; }
+        if (!rock.passed && rock.x + rock.r < shipX - SHIP.radius) { rock.passed = true; game.score += 1; showGame(); }
+      }
+      game.rocks = game.rocks.filter(rock => rock.x + rock.r > -10);
+    }
+    function drawGame(dt, ms) {
+      const { w, h } = view;
+      ctx.fillStyle = '#f8f8f6'; ctx.fillRect(0, 0, w, h);  // --stage
+
+      const drift = (game.status === 'playing' ? rockSpeed() : 40) * dt * .35;
+      ctx.fillStyle = '#a9a8a2';
+      for (const star of game.stars) {
+        star.x -= drift * star.z;
+        if (star.x < 0) { star.x += w; star.y = Math.random() * h; }
+        ctx.globalAlpha = .25 + star.z * .55;
+        ctx.fillRect(star.x, star.y, star.z * 1.8, star.z * 1.8);
+      }
+      ctx.globalAlpha = 1;
+
+      // The ship's range: straight finger at the bottom line, the chosen angle at the top one.
+      ctx.setLineDash([4, 6]); ctx.strokeStyle = '#d4d4cf'; ctx.lineWidth = 1;
+      ctx.fillStyle = '#8a8984'; ctx.font = '12px system-ui, -apple-system, "Segoe UI", sans-serif'; ctx.textAlign = 'center';
+      for (const [angle, label] of [[0, 'straight · 0°'], [gameTopAngle(), `bent · ${gameTopAngle()}°`]]) {
+        const y = Math.round(angleToY(angle)) + .5;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        ctx.fillText(label, w / 2, angle ? y + 14 : y - 6);
+      }
+      ctx.setLineDash([]);
+
+      for (const rock of game.rocks) {
+        ctx.save(); ctx.translate(rock.x, rock.y); ctx.rotate(rock.spin);
+        ctx.beginPath();
+        rock.points.forEach((p, i) => ctx[i ? 'lineTo' : 'moveTo'](Math.cos(p.a) * p.d, Math.sin(p.a) * p.d));
+        ctx.closePath();
+        ctx.fillStyle = '#e3e3df'; ctx.fill();
+        ctx.strokeStyle = '#a9a8a2'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      }
+
+      const flame = game.status === 'playing' ? 9 + Math.sin(ms / 45) * 3 : 5;
+      ctx.save();
+      ctx.translate(w * SHIP.x, game.shipY);
+      ctx.rotate(clamp(game.shipVy / 500, -.45, .45));
+      ctx.fillStyle = '#f2a33a';
+      ctx.beginPath(); ctx.moveTo(-9, -5); ctx.lineTo(-9 - flame, 0); ctx.lineTo(-9, 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#2a78d6';
+      ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -12); ctx.lineTo(-6, 0); ctx.lineTo(-12, 12); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(3, 0, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    function gameFrame(ms) {
+      game.frame = requestAnimationFrame(gameFrame);
+      sizeCanvas();
+      if (!view.w || !view.h) return;
+      const dt = game.lastMs ? Math.min(.05, (ms - game.lastMs) / 1000) : 0;  // a hidden tab pauses rather than jumps
+      game.lastMs = ms;
+      // Data rows arrive 5 times a second, so ease the ship towards the latest angle.
+      const target = angleToY(state.angle), before = game.shipY ?? target;
+      game.shipY = before + (target - before) * (dt ? 1 - Math.exp(-dt / .09) : 1);
+      game.shipVy = dt ? (game.shipY - before) / dt : 0;
+      if (game.status === 'playing') updateRocks(dt);
+      drawGame(dt, ms);
+    }
+    function runGameLoop(on) {
+      if (on && !game.frame) { game.lastMs = 0; game.frame = requestAnimationFrame(gameFrame); }
+      if (!on && game.frame) { cancelAnimationFrame(game.frame); game.frame = 0; }
+    }
+
+    // Arduino over USB (Web Serial API: Chrome, Edge, Firefox 151+). src/main.cpp prints a
+    // whitespace-separated table; its header row names the columns.
+    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
+    let columns = DEFAULT_COLUMNS, serialReader = null;
+    let userDisconnect = false;  // set when Disconnect is clicked, so any other end of the connection reads as lost
+
+    // The live and calibration views each have a Connect button, a status line and
+    // pump buttons, all driven together through these classes.
+    const showSerialStatus = text => all('.serial-status').forEach(el => { el.textContent = text; });
+    function setConnectButtons({ text, disabled }) {
+      all('.connect-btn').forEach(button => {
+        if (text !== undefined) button.textContent = text;
+        if (disabled !== undefined) button.disabled = disabled;
+      });
+    }
+    function showInputMode(live, calibration = live) {
+      $('inputMode').textContent = live;
+      $('calInput').textContent = calibration;
+    }
 
     // Recording: every data row from Connect to Disconnect, downloadable as CSV.
     // Times are when the browser received each row.
-    let recording = null;  // { columns, startMs, rows: [{ seconds, clock, values }], savedRows }
+    let recording = null;  // { columns, startMs, rows: [{ seconds, clock, exercise, values }], savedRows }
 
     const unsavedRows = () => recording ? recording.rows.length - recording.savedRows : 0;
     const pad = (n, width = 2) => String(n).padStart(width, '0');
@@ -285,6 +822,12 @@
       const text = String(value ?? '');
       return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
     };
+    // The page's side of each row: Exercise, Rep and Phase columns.
+    function exerciseCells() {
+      if (exercise === 'auto') return ['Automatic', auto.running ? auto.rep : '', auto.running ? PHASES[auto.phase].label : ''];
+      if (exercise === 'manual') return ['Manual', '', topKey() === 'up' ? 'Bend' : topKey() === 'down' ? 'Straighten' : ''];
+      return ['Game', '', game.status === 'playing' ? 'Playing' : ''];
+    }
 
     function startRecording() {
       recording = { columns: null, startMs: 0, rows: [], savedRows: 0 };
@@ -294,7 +837,7 @@
       const now = performance.now();
       if (!recording.rows.length) { recording.columns = columns; recording.startMs = now; }
       const values = Object.fromEntries(columns.map((name, i) => [name, cells[i]]));
-      recording.rows.push({ seconds: (now - recording.startMs) / 1000, clock: new Date(), values });
+      recording.rows.push({ seconds: (now - recording.startMs) / 1000, clock: new Date(), exercise: exerciseCells(), values });
       showRecording();
     }
     function showRecording() {
@@ -308,21 +851,25 @@
     }
     function downloadRecording() {
       const trial = $('trialInput').value.trim();
-      const lines = [['Time(s)', 'Clock time', 'Trial', ...recording.columns]];
+      const lines = [['Time(s)', 'Clock time', 'Trial', 'Exercise', 'Rep', 'Phase', ...recording.columns]];
       for (const row of recording.rows) {
         const readings = recording.columns.map(name => row.values[name] === '--' ? '' : row.values[name]);  // "--" becomes an empty cell
-        lines.push([row.seconds.toFixed(3), clockText(row.clock), trial, ...readings]);
+        lines.push([row.seconds.toFixed(3), clockText(row.clock), trial, ...row.exercise, ...readings]);
       }
-      const csv = lines.map(line => line.map(csvField).join(',')).join('\r\n') + '\r\n';
-      const started = clockText(recording.rows[0].clock).slice(0, 19).replace(' ', '_').replace(/:/g, '-');
+      const started = fileStamp(recording.rows[0].clock);
       const slug = trial.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-      link.download = `flexsense_${started}${slug ? '_' + slug : ''}.csv`;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      saveCsv(`flexsense_${started}${slug ? '_' + slug : ''}.csv`, lines);
       recording.savedRows = recording.rows.length;
       showRecording();
+    }
+    const fileStamp = date => clockText(date).slice(0, 19).replace(' ', '_').replace(/:/g, '-');
+    function saveCsv(fileName, lines) {
+      const csv = lines.map(line => line.map(csvField).join(',')).join('\r\n') + '\r\n';
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      link.download = fileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     }
     $('downloadBtn').addEventListener('click', downloadRecording);
     window.addEventListener('beforeunload', event => {
@@ -333,44 +880,60 @@
       const text = line.trim(), cells = text.split(/\s+/);
       if (cells[0] === 'Force(g)') { columns = cells; return; }
       if (cells.length !== columns.length || !Number.isFinite(parseFloat(cells[0]))) {
-        if (text) $('serialStatus').textContent = text;  // startup messages such as "Venting for 5 seconds..."
+        if (text) showSerialStatus(text);  // startup messages such as "Venting for 5 seconds..."
         return;
       }
       const column = name => parseFloat(cells[columns.indexOf(name)]);  // "--" parses as NaN and is skipped
+      const row = { angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)'), wave: column('Wave(V)'), mode: cells[columns.indexOf('Mode')] };
+      const mode = row.mode, now = performance.now();
+      state.ready = true;  // the sketch has finished its startup vent
+      state.arduinoMode = mode;
+      // The FSR stop, or the sketch's timeout, took control. Don't let the next phase or key release undo it.
+      if ((mode === 'STOP' || mode === 'FSR') && now - lastDriveMs > COMMAND_SETTLE_MS) {
+        stopAuto(mode === 'STOP' ? 'Stopped: the FSR was pressed' : 'Stopped: the Arduino took back control', false);
+        releaseAllKeys(true);
+      }
+      stepAuto(now);
       recordRow(cells);
-      setData({ angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)') }, true);
-      $('inputMode').textContent = 'Arduino · live';
-      showArduinoMode(cells[columns.indexOf('Mode')]);
+      setData({ angle: row.angle, loss: row.loss, pressure: row.pressure }, true);
+      showInputMode('Arduino · live');
+      showArduinoMode(mode);
       enableControls(true);  // only once the sketch has finished its startup vent
-      sendCommand('K');      // answering each row keeps the sketch from timing out
+      calibrationRow(row);
+      showActuator(); refreshControls();
+      sendCommand('K');  // answering each row keeps the sketch from timing out
     }
 
     async function connectArduino() {
-      if (!('serial' in navigator)) { $('serialStatus').textContent = 'This browser has no Web Serial. Use Chrome, Edge or Firefox 151 or later.'; return; }
+      if (!('serial' in navigator)) { showSerialStatus('This browser has no Web Serial. Use Chrome, Edge or Firefox 151 or later.'); return; }
       const unsaved = unsavedRows();
       if (unsaved && !confirm(`The last recording has ${unsaved} rows that haven't been downloaded. Discard them and start a new recording?`)) return;
       let port;
-      $('connectBtn').disabled = true;
+      setConnectButtons({ disabled: true });
       try {
         port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
       } catch (err) {
-        $('serialStatus').textContent = err.name === 'NotFoundError' ? 'No port selected.' : `Could not open the port: ${err.message}`;
+        showSerialStatus(err.name === 'NotFoundError' ? 'No port selected.' : `Could not open the port: ${err.message}`);
         return;
       } finally {
-        $('connectBtn').disabled = false;
+        setConnectButtons({ disabled: false });
       }
+      // Stop whatever the simulator was doing; nothing is sent until the sketch's first data row.
+      stopAuto('Stopped: connected to the Arduino');
+      releaseAllKeys(true);
       const decoder = new TextDecoderStream();
       const piped = port.readable.pipeTo(decoder.writable).catch(() => {});
       serialReader = decoder.readable.getReader();
       serialWriter = port.writable.getWriter();
       columns = DEFAULT_COLUMNS;
       startRecording();
-      state.connected = true;
-      pauseSimulation();  // so a dropped cable doesn't fall back to fake motion
-      $('connectBtn').textContent = 'Disconnect';
-      $('inputMode').textContent = 'Arduino · waiting for data';
-      $('serialStatus').textContent = '';
+      Object.assign(state, { connected: true, ready: false, arduinoMode: '' });
+      showStatus(); showActuator(); refreshControls();
+      setConnectButtons({ text: 'Disconnect' });
+      showInputMode('Arduino · waiting for data');
+      showSerialStatus('');
+      startCalibrationInput();
       userDisconnect = false;
       let buffer = '';
       try {
@@ -378,7 +941,7 @@
           const { value, done } = await serialReader.read();
           if (done) {
             // Chrome reports a pulled cable as an error (caught below). Firefox just ends the stream.
-            if (!userDisconnect) $('serialStatus').textContent = 'Connection lost: The Arduino was disconnected.';
+            if (!userDisconnect) showSerialStatus('Connection lost: The Arduino was disconnected.');
             break;
           }
           buffer += value;
@@ -387,12 +950,17 @@
           lines.forEach(handleSerialLine);
         }
       } catch (err) {
-        $('serialStatus').textContent = `Connection lost: ${err.message}`;
+        showSerialStatus(`Connection lost: ${err.message}`);
       } finally {
         serialReader.releaseLock();
         serialReader = null;
+        stopAuto('Stopped: the Arduino disconnected', false);  // X below vents
+        releaseAllKeys(true);
+        state.ready = false;
+        refreshControls();
         enableControls(false);
         showArduinoMode('');
+        stopCalibrationInput();
         // Vent and hand back to the FSR. Don't wait long: if the cable is out, the sketch times out on its own.
         await Promise.race([sendCommand('X'), new Promise(resolve => setTimeout(resolve, 500))]);
         serialWriter.releaseLock();
@@ -400,20 +968,388 @@
         await piped;
         await port.close().catch(() => {});
         state.connected = false;
-        showRecording();
-        $('connectBtn').textContent = 'Connect to Arduino';
-        $('inputMode').textContent = 'Manual simulator';
-        showStatus();
+        Object.assign(sim, { mode: 'VENT', pressure: state.pressure, angle: state.angle, lastMs: performance.now() });  // relax from the last real reading
+        showRecording(); showStatus(); showActuator(); refreshControls();
+        setConnectButtons({ text: 'Connect to Arduino' });
+        showInputMode('Simulator', 'Arduino not connected');
       }
     }
 
     // Cancelling the reader ends the read loop above, which closes the port.
-    $('connectBtn').addEventListener('click', () => {
+    all('.connect-btn').forEach(button => button.addEventListener('click', () => {
       if (!serialReader) return connectArduino();
       userDisconnect = true;
       serialReader.cancel();
+    }));
+
+    // Calibration view. Each point pairs an angle measured with a protractor with the
+    // sketch's Loss(dB) averaged over the next few rows. A least-squares fit of
+    // angle = A·loss² + B·loss + C gives the constants to paste into src/main.cpp.
+    // Points are kept in this browser's localStorage; only Arduino data is captured.
+    const CAL_STORAGE_KEY = 'flexsense.calibration.v1';
+    const cal = { points: [], model: 'quadratic', zero: false, fit: null, capture: null, live: null, session: 0, ready: false, hover: null };
+    const toFixed = (value, decimals) => value.toFixed(decimals).replace(/^-(?=0(\.0*)?$)/, '');  // no "-0.00"
+    const fixed = (value, decimals) => Number.isFinite(value) ? toFixed(value, decimals) : '--';
+    const signed = value => {
+      if (!Number.isFinite(value)) return '--';
+      const rounded = Number(value.toFixed(1));
+      return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${Math.abs(rounded).toFixed(1)}`;
+    };
+    const rms = errors => errors.length ? Math.sqrt(errors.reduce((sum, e) => sum + e * e, 0) / errors.length) : NaN;
+    const currentFit = () => cal.fit && !cal.fit.error ? cal.fit : null;
+
+    function loadCalibration() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(CAL_STORAGE_KEY) || 'null');
+        if (!saved) return;
+        const num = value => typeof value === 'number' ? value : NaN;  // JSON stores NaN as null
+        cal.points = (Array.isArray(saved.points) ? saved.points : [])
+          .map(p => ({ angle: num(p.angle), loss: num(p.loss), lossSd: num(p.lossSd), rows: num(p.rows), sketchAngle: num(p.sketchAngle), pressure: num(p.pressure), wave: num(p.wave), time: num(p.time), session: num(p.session), use: p.use !== false }))
+          .filter(p => Number.isFinite(p.angle) && Number.isFinite(p.loss));
+        cal.model = saved.model === 'linear' ? 'linear' : 'quadratic';
+        cal.zero = saved.zero === true;
+      } catch { /* storage blocked or unreadable: start empty */ }
+    }
+    function saveCalibration() {
+      try { localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify({ points: cal.points, model: cal.model, zero: cal.zero })); }
+      catch { /* storage blocked: the points last until the tab closes */ }
+    }
+
+    // Gauss-Jordan elimination with partial pivoting on an augmented k×(k+1) matrix.
+    function solveLinear(m) {
+      const k = m.length;
+      for (let c = 0; c < k; c++) {
+        let pivot = c;
+        for (let r = c + 1; r < k; r++) if (Math.abs(m[r][c]) > Math.abs(m[pivot][c])) pivot = r;
+        if (Math.abs(m[pivot][c]) < 1e-12) return null;
+        [m[c], m[pivot]] = [m[pivot], m[c]];
+        for (let r = 0; r < k; r++) {
+          if (r === c) continue;
+          const f = m[r][c] / m[c][c];
+          for (let j = c; j <= k; j++) m[r][j] -= f * m[c][j];
+        }
+      }
+      return m.map((row, i) => row[k] / row[i]);
+    }
+
+    // Least squares on the chosen terms. Predictions are floored at 0, as in the sketch.
+    function fitCalibration() {
+      const used = cal.points.filter(p => p.use);
+      const terms = [cal.model === 'quadratic' && (x => x * x), x => x, !cal.zero && (() => 1)].filter(Boolean);
+      const k = terms.length, distinct = new Set(used.map(p => p.loss.toFixed(3))).size;
+      if (distinct < k) return { error: `The fit needs points at ${k} or more different bends.${used.length ? ` It has ${distinct}.` : ''}`, k };
+      const m = terms.map(() => new Array(k + 1).fill(0));
+      for (const p of used) {
+        const f = terms.map(term => term(p.loss));
+        f.forEach((fi, i) => { f.forEach((fj, j) => { m[i][j] += fi * fj; }); m[i][k] += fi * p.angle; });
+      }
+      const coef = solveLinear(m);
+      if (!coef || !coef.every(Number.isFinite)) return { error: 'These points can\'t be fitted. Capture points at more different bends.', k };
+      const quadratic = cal.model === 'quadratic';
+      const A = quadratic ? coef[0] : 0, B = coef[quadratic ? 1 : 0], C = cal.zero ? 0 : coef[k - 1];
+      const predict = loss => Math.max(0, A * loss * loss + B * loss + C);
+      const errors = used.map(p => predict(p.loss) - p.angle);
+      const meanAngle = used.reduce((sum, p) => sum + p.angle, 0) / used.length;
+      const ssTotal = used.reduce((sum, p) => sum + (p.angle - meanAngle) ** 2, 0);
+      const losses = used.map(p => p.loss), angles = used.map(p => p.angle), times = used.map(p => p.time).filter(Number.isFinite);
+      return {
+        A, B, C, k, predict, model: cal.model, zero: cal.zero, n: used.length,
+        rmse: rms(errors), maxError: Math.max(...errors.map(Math.abs)),
+        r2: ssTotal > 0 ? 1 - errors.reduce((sum, e) => sum + e * e, 0) / ssTotal : NaN,
+        minLoss: Math.min(...losses), maxLoss: Math.max(...losses), minAngle: Math.min(...angles), maxAngle: Math.max(...angles),
+        sessions: new Set(used.map(p => p.session)).size, time: times.length ? Math.max(...times) : Date.now(),
+      };
+    }
+    function fitWarnings(fit) {
+      const notes = [];
+      if (fit.n === fit.k) notes.push(`With only ${fit.n} points the curve passes through every one, so the error reads 0. Add points to see the real error.`);
+      const slope = loss => 2 * fit.A * loss + fit.B;
+      if (!(slope(fit.minLoss) > 0 && slope(fit.maxLoss) > 0)) notes.push('The fitted angle doesn\'t keep rising with loss across the points, so two bends could read as the same angle. Check the points, add more, or try the linear fit.');
+      if (fit.sessions > 1) notes.push(`These points come from ${fit.sessions} connections. Each connection re-zeros the optical loss, so they only line up if the sleeve's light level didn't change in between.`);
+      return notes;
+    }
+    function equationText(fit) {
+      const parts = [[fit.A, ' L²'], [fit.B, ' L'], [fit.C, '']].filter((_, i) => !(i === 0 && fit.model === 'linear') && !(i === 2 && fit.zero));
+      return 'θ = ' + parts.map(([c, suffix], i) => `${i ? (c < 0 ? ' − ' : ' + ') : (c < 0 ? '−' : '')}${Number(Math.abs(c).toPrecision(3))}${suffix}`).join('');
+    }
+    function snippetText(fit) {
+      const num = value => String(Number(value.toPrecision(6)) || 0);  // also turns -0 into 0
+      const angle = value => Number(value.toFixed(1));
+      return [
+        '// Angle calibration: angle (deg) = ANGLE_A * loss^2 + ANGLE_B * loss + ANGLE_C, loss in dB.',
+        `// Fitted ${clockText(new Date(fit.time)).slice(0, 10)} from ${fit.n} points, ${fit.minLoss.toFixed(2)} to ${fit.maxLoss.toFixed(2)} dB and ${angle(fit.minAngle)} to ${angle(fit.maxAngle)} deg. RMS error ${fit.rmse.toFixed(1)} deg.`,
+        `const double ANGLE_A = ${num(fit.A)};`,
+        `const double ANGLE_B = ${num(fit.B)};`,
+        `const double ANGLE_C = ${num(fit.C)};`,
+      ].join('\n');
+    }
+
+    function refreshCalibration() {
+      cal.fit = fitCalibration();
+      const fit = currentFit(), used = cal.points.filter(p => p.use), excluded = cal.points.length - used.length;
+      renderPoints(fit);
+      $('pointCount').textContent = cal.points.length ? `${cal.points.length} point${cal.points.length === 1 ? '' : 's'}${excluded ? ` · ${excluded} left out` : ''}` : 'None yet';
+      $('statPoints').textContent = used.length;
+      $('statRmse').textContent = fit ? fit.rmse.toFixed(1) : '--';
+      $('statMax').textContent = fit ? fit.maxError.toFixed(1) : '--';
+      $('statSketch').textContent = fixed(rms(used.filter(p => Number.isFinite(p.sketchAngle)).map(p => p.sketchAngle - p.angle)), 1);
+      $('fitEquation').textContent = fit ? `${equationText(fit)} · R² ${fixed(fit.r2, 3)}` : 'No fit yet';
+      $('fitWarnings').innerHTML = fit ? fitWarnings(fit).map(note => `<li>${note}</li>`).join('') : `<li class="info">${cal.fit.error}</li>`;
+      $('snippet').textContent = fit ? snippetText(fit) : `// Capture points at ${cal.fit.k} or more different bends to get the coefficients.`;
+      $('copyBtn').disabled = !fit;
+      $('exportPointsBtn').disabled = $('clearPointsBtn').disabled = !cal.points.length;
+      $('fitModel').value = cal.model;
+      $('fitZero').checked = cal.zero;
+      updateCalibrationLive();
+      drawFitChart();
+    }
+    function renderPoints(fit) {
+      $('pointRows').innerHTML = cal.points.map((p, i) => {
+        const predicted = fit ? fit.predict(p.loss) : NaN;
+        return `<tr class="${p.use ? '' : 'excluded'}"><td><input type="checkbox" data-use="${i}"${p.use ? ' checked' : ''} aria-label="Use point ${i + 1} in the fit">${i + 1}</td>`
+          + `<td>${fixed(p.angle, 1)}</td><td>${fixed(p.loss, 3)}</td><td>${fixed(p.lossSd, 3)}</td><td>${fixed(p.sketchAngle, 1)}</td><td>${fixed(predicted, 1)}</td><td>${signed(predicted - p.angle)}</td>`
+          + `<td><button class="icon" data-remove="${i}" title="Remove point ${i + 1}" aria-label="Remove point ${i + 1}">✕</button></td></tr>`;
+      }).join('') || '<tr class="empty-row"><td colspan="8">No points yet. Connect, bend the finger, type the angle you measured and press Capture.</td></tr>';
+    }
+
+    // Live reading and capture
+    function updateCalibrationLive() {
+      const fit = currentFit(), loss = cal.live ? cal.live.loss : NaN;
+      $('calLoss').textContent = fixed(loss, 2);
+      $('calSketchAngle').textContent = fixed(cal.live ? cal.live.angle : NaN, 1);
+      $('calFitAngle').textContent = fit && Number.isFinite(loss) ? fit.predict(loss).toFixed(1) : '--';
+      const outside = fit && Number.isFinite(loss) && (loss < fit.minLoss - .005 || loss > fit.maxLoss + .005);
+      $('calRangeHint').textContent = outside
+        ? `The live loss is outside the captured range (${fit.minLoss.toFixed(2)} to ${fit.maxLoss.toFixed(2)} dB), so the new fit is guessing here.`
+        : 'Sketch angle uses the constants in src/main.cpp now. New fit angle uses your captured points.';
+      $('calRangeHint').classList.toggle('warn', Boolean(outside));
+    }
+    function setCaptureStatus(text, warn = false) {
+      $('captureStatus').textContent = text;
+      $('captureStatus').classList.toggle('warn', warn);
+    }
+    function updateCaptureButton() {
+      $('captureBtn').disabled = !cal.ready && !cal.capture;
+      $('captureBtn').textContent = cal.capture ? 'Cancel' : 'Capture';
+    }
+    function startCalibrationInput() {  // on connect
+      cal.session = Date.now();
+      setCaptureStatus('Waiting for the first reading. The sketch vents for 5 s as it starts.');
+    }
+    function stopCalibrationInput() {  // on disconnect
+      if (cal.capture) setCaptureStatus('Disconnected before the capture finished. Nothing was saved.', true);
+      else setCaptureStatus('Connect to the Arduino to capture points.');
+      Object.assign(cal, { capture: null, live: null, ready: false, session: 0 });
+      updateCaptureButton();
+      updateCalibrationLive();
+      drawFitChart();
+    }
+    function calibrationRow(row) {  // every data row from the Arduino
+      cal.live = row;
+      if (!cal.ready) {
+        cal.ready = true;
+        setCaptureStatus('Ready. Type the angle you measured and press Capture.');
+        updateCaptureButton();
+      }
+      captureRow(row);
+      updateCalibrationLive();
+      if (!$('calibration').hidden) drawFitChart();
+    }
+    function startCapture() {
+      if (cal.capture) {
+        cal.capture = null;
+        setCaptureStatus('Capture cancelled. Nothing was saved.');
+        updateCaptureButton();
+        return;
+      }
+      const angle = parseFloat($('calAngleInput').value);
+      if (!Number.isFinite(angle)) { setCaptureStatus('Type the angle you measured first.', true); $('calAngleInput').focus(); return; }
+      cal.capture = { angle, need: Number($('calRowsSelect').value), rows: [] };
+      setCaptureStatus(`Capturing ${angle}°: 0 of ${cal.capture.need} rows. Hold still.`);
+      updateCaptureButton();
+    }
+    function captureRow(row) {
+      const capture = cal.capture;
+      if (!capture) return;
+      capture.rows.push(row);
+      if (capture.rows.length < capture.need) { setCaptureStatus(`Capturing ${capture.angle}°: ${capture.rows.length} of ${capture.need} rows. Hold still.`); return; }
+      cal.capture = null;
+      updateCaptureButton();
+      const good = capture.rows.filter(r => Number.isFinite(r.loss));
+      if (!good.length) { setCaptureStatus('The sketch sent no loss reading (--) during the capture, so nothing was saved. Check the waveguide.', true); return; }
+      const mean = key => { const values = good.map(r => r[key]).filter(Number.isFinite); return values.length ? values.reduce((a, b) => a + b, 0) / values.length : NaN; };
+      const loss = mean('loss'), lossSd = Math.sqrt(good.reduce((sum, r) => sum + (r.loss - loss) ** 2, 0) / good.length);
+      cal.points.push({ angle: capture.angle, loss, lossSd, rows: good.length, sketchAngle: mean('angle'), pressure: mean('pressure'), wave: mean('wave'), time: Date.now(), session: cal.session, use: true });
+      saveCalibration();
+      refreshCalibration();
+      const pumping = capture.rows.some(r => r.mode === 'INFL');
+      const moved = pumping ? ' The pump was running, so the finger was probably moving. Hold, then capture it again.'
+        : lossSd > .02 ? ' The reading moved while it averaged. If the finger wasn\'t still, untick or remove the point and capture it again.' : '';
+      setCaptureStatus(`Saved point ${cal.points.length}: ${capture.angle}° at ${loss.toFixed(3)} dB (spread ${lossSd.toFixed(3)}, ${good.length} rows).${moved}`, Boolean(moved));
+      $('calAngleInput').select();
+    }
+    $('captureBtn').addEventListener('click', startCapture);
+    $('calAngleInput').addEventListener('keydown', event => { if (event.key === 'Enter' && cal.ready && !cal.capture) startCapture(); });
+
+    // Points table, fit options, export
+    $('pointRows').addEventListener('change', event => {
+      const index = event.target.dataset.use;
+      if (index === undefined) return;
+      cal.points[index].use = event.target.checked;
+      saveCalibration();
+      refreshCalibration();
     });
-    setData({angle:42, pressure:8.6, loss:lossFromAngle(42)}); setInterval(tick, 100); 
+    $('pointRows').addEventListener('click', event => {
+      const button = event.target.closest('[data-remove]');
+      if (!button) return;
+      cal.points.splice(Number(button.dataset.remove), 1);
+      saveCalibration();
+      refreshCalibration();
+    });
+    $('fitModel').addEventListener('change', event => { cal.model = event.target.value; saveCalibration(); refreshCalibration(); });
+    $('fitZero').addEventListener('change', event => { cal.zero = event.target.checked; saveCalibration(); refreshCalibration(); });
+    $('clearPointsBtn').addEventListener('click', () => {
+      if (!confirm(`Delete all ${cal.points.length} calibration points? Download them first if you want to keep them.`)) return;
+      cal.points = [];
+      saveCalibration();
+      refreshCalibration();
+    });
+    $('exportPointsBtn').addEventListener('click', () => {
+      const fit = currentFit(), sessions = [...new Set(cal.points.map(p => p.session))];
+      const cell = (value, decimals) => Number.isFinite(value) ? toFixed(value, decimals) : '';
+      const lines = [['Point', 'Measured angle(deg)', 'Loss(dB)', 'Loss spread(dB)', 'Rows averaged', 'Sketch angle(deg)', 'New fit angle(deg)', 'New fit error(deg)', 'Press(psi)', 'Wave(V)', 'Used in fit', 'Connection', 'Clock time']];
+      cal.points.forEach((p, i) => {
+        const predicted = fit ? fit.predict(p.loss) : NaN;
+        lines.push([i + 1, p.angle, cell(p.loss, 4), cell(p.lossSd, 4), cell(p.rows, 0), cell(p.sketchAngle, 2), cell(predicted, 2), cell(predicted - p.angle, 2),
+          cell(p.pressure, 3), cell(p.wave, 3), p.use ? 'yes' : 'no', sessions.indexOf(p.session) + 1, Number.isFinite(p.time) ? clockText(new Date(p.time)) : '']);
+      });
+      saveCsv(`flexsense_calibration_${fileStamp(new Date())}.csv`, lines);
+    });
+    $('copyBtn').addEventListener('click', () => {
+      const show = label => { $('copyBtn').textContent = label; setTimeout(() => { $('copyBtn').textContent = 'Copy'; }, 1600); };
+      const copied = navigator.clipboard ? navigator.clipboard.writeText($('snippet').textContent) : Promise.reject();
+      copied.then(() => show('Copied'), () => { getSelection().selectAllChildren($('snippet')); show('Selected, copy it'); });
+    });
+
+    // Plot of measured angle against loss, with the new fit, the current sketch and the live loss
+    function axisTicks(min, max) {
+      if (!(max - min > 1e-9)) max = min + 1;
+      const raw = (max - min) / 5, magnitude = 10 ** Math.floor(Math.log10(raw)), r = raw / magnitude;
+      const step = (r <= 1 ? 1 : r <= 2 ? 2 : r <= 2.5 ? 2.5 : r <= 5 ? 5 : 10) * magnitude;
+      const lo = Math.floor(min / step + 1e-9) * step, hi = Math.ceil(max / step - 1e-9) * step;
+      const decimals = (String(Number(step.toFixed(10))).split('.')[1] || '').length;
+      const ticks = [];
+      for (let i = 0; lo + i * step <= hi + step / 2; i++) ticks.push(Number((lo + i * step).toFixed(10)));
+      return { lo, hi, ticks, label: value => value.toFixed(decimals) };
+    }
+    function drawFitChart() {
+      // Draw in real pixels so the text stays readable at any width (0 while the view is hidden).
+      const W = Math.round($('fitChart').clientWidth) || 640, H = Math.round(clamp(W * .6, 260, 400));
+      const pad = { l: 52, r: 16, t: 14, b: 46 }, plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+      $('fitChart').setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const fit = currentFit(), pts = cal.points, liveLoss = cal.live ? cal.live.loss : NaN;
+      const xs = [0, ...pts.map(p => p.loss)], ys = [0, ...pts.map(p => p.angle), ...pts.map(p => p.sketchAngle).filter(Number.isFinite)];
+      if (Number.isFinite(liveLoss)) xs.push(liveLoss);
+      if (!pts.length) { xs.push(1); ys.push(90); }
+      if (fit) for (let i = 0; i <= 20; i++) ys.push(fit.predict(fit.minLoss + (fit.maxLoss - fit.minLoss) * i / 20));
+      const xa = axisTicks(Math.min(...xs), Math.max(...xs)), ya = axisTicks(Math.min(...ys), Math.max(...ys));
+      const X = v => pad.l + (v - xa.lo) / (xa.hi - xa.lo) * plotW, Y = v => pad.t + plotH - (v - ya.lo) / (ya.hi - ya.lo) * plotH;
+      let svg = `<defs><clipPath id="fitClip"><rect x="${pad.l}" y="${pad.t}" width="${plotW}" height="${plotH}"/></clipPath></defs>`;
+      ya.ticks.forEach(v => { svg += `<line class="gridline" x1="${pad.l}" x2="${W - pad.r}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis-label" x="${pad.l - 8}" y="${Y(v) + 4}" text-anchor="end">${ya.label(v)}°</text>`; });
+      xa.ticks.forEach(v => { svg += `<line class="gridline" x1="${X(v)}" x2="${X(v)}" y1="${H - pad.b}" y2="${H - pad.b + 5}"/><text class="axis-label" x="${X(v)}" y="${H - pad.b + 19}" text-anchor="middle">${xa.label(v)}</text>`; });
+      svg += `<text class="axis-title" x="${pad.l + plotW / 2}" y="${H - 6}" text-anchor="middle">Optical loss (dB)</text>`
+        + `<text class="axis-title" transform="translate(12 ${pad.t + plotH / 2}) rotate(-90)" text-anchor="middle">Bend angle (°)</text><g clip-path="url(#fitClip)">`;
+      // Current sketch: its averaged angle at each captured point, joined in loss order
+      const sketch = pts.filter(p => Number.isFinite(p.sketchAngle)).sort((a, b) => a.loss - b.loss);
+      if (sketch.length > 1) svg += `<polyline points="${sketch.map(p => `${X(p.loss)},${Y(p.sketchAngle)}`).join(' ')}" fill="none" stroke="#a9a8a2" stroke-width="2" stroke-dasharray="5 5" stroke-linejoin="round"/>`;
+      // New fit: solid across the captured range, dotted where it extrapolates
+      if (fit) {
+        const segment = (from, to, dotted) => {
+          if (!(to > from)) return '';
+          let points = '';
+          for (let i = 0; i <= 40; i++) { const x = from + (to - from) * i / 40; points += `${X(x)},${Y(fit.predict(x))} `; }
+          return `<polyline points="${points}" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${dotted ? ' stroke-dasharray="1 6" opacity=".75"' : ''}/>`;
+        };
+        svg += segment(xa.lo, fit.minLoss, true) + segment(fit.maxLoss, xa.hi, true) + segment(fit.minLoss, fit.maxLoss, false);
+      }
+      if (Number.isFinite(liveLoss)) {
+        svg += `<line x1="${X(liveLoss)}" x2="${X(liveLoss)}" y1="${pad.t}" y2="${H - pad.b}" stroke="#1baf7a" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+        if (fit) svg += `<circle cx="${X(liveLoss)}" cy="${Y(fit.predict(liveLoss))}" r="5" fill="#1baf7a" stroke="#fff" stroke-width="2"/>`;
+      }
+      svg += '</g>';
+      pts.forEach((p, i) => {
+        const cx = X(p.loss), cy = Y(p.angle);
+        svg += p.use ? `<circle cx="${cx}" cy="${cy}" r="5" fill="#1b1b1a" stroke="#fff" stroke-width="2"/>` : `<circle cx="${cx}" cy="${cy}" r="4.5" fill="#fff" stroke="#a9a8a2" stroke-width="2"/>`;
+        svg += `<circle cx="${cx}" cy="${cy}" r="13" fill="transparent" data-point="${i}"/>`;  // larger hover target
+      });
+      if (!pts.length) svg += `<text class="axis-label" x="${pad.l + plotW / 2}" y="${pad.t + plotH / 2}" text-anchor="middle">Captured points appear here</text>`;
+      $('fitChart').innerHTML = svg;
+      showPointTip();  // the redraw replaced the hovered circle
+    }
+    function showPointTip() {
+      const p = cal.points[cal.hover], target = p && $('fitChart').querySelector(`[data-point="${cal.hover}"]`);
+      if (!target) { $('fitTip').hidden = true; return; }
+      const fit = currentFit(), wrap = $('fitChart').parentElement.getBoundingClientRect(), dot = target.getBoundingClientRect();
+      $('fitTip').innerHTML = `<b>Point ${cal.hover + 1}${p.use ? '' : ' · left out'}</b><br>${p.angle.toFixed(1)}° at ${p.loss.toFixed(3)} dB<br>`
+        + `<span>New fit ${fit ? fit.predict(p.loss).toFixed(1) + '°' : '--'} · sketch ${fixed(p.sketchAngle, 1)}°</span>`;
+      $('fitTip').style.left = `${dot.left + dot.width / 2 - wrap.left}px`;
+      $('fitTip').style.top = `${dot.top + dot.height / 2 - wrap.top}px`;
+      $('fitTip').hidden = false;
+    }
+    $('fitChart').addEventListener('mouseover', event => {
+      if (event.target.dataset.point === undefined) return;
+      cal.hover = Number(event.target.dataset.point);
+      showPointTip();
+    });
+    $('fitChart').addEventListener('mouseout', event => {
+      if (event.target.dataset.point === undefined) return;
+      cal.hover = null;
+      showPointTip();
+    });
+
+    // Views: #calibration shows the calibration view, anything else the live session.
+    function showView() {
+      const calibrating = location.hash === '#calibration', trends = location.hash === '#trends';
+      $('liveView').hidden = $('modeBar').hidden = calibrating;
+      $('calibration').hidden = !calibrating;
+      // Capturing needs a still finger, so the exercise modes stop while the calibration view is open.
+      if (calibrating) {
+        stopAuto('Stopped: you opened Calibration');
+        releaseAllKeys();
+        if (game.status === 'playing') resetGame();
+      }
+      runGameLoop(!calibrating && exercise === 'game');
+      $('viewTitle').textContent = calibrating ? 'Calibration' : 'Live session';
+      $('viewSubtitle').textContent = calibrating ? 'Fit the bend angle to the optical loss, then paste the result into the sketch' : 'Optical finger-sleeve feedback for guided rehab exercises';
+      const current = calibrating ? '#calibration' : trends ? '#trends' : '#overview';
+      all('#sideNav a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === current));
+      all('.view-tabs a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === (calibrating ? '#calibration' : '#overview')));
+      if (trends) $('trends').scrollIntoView(); else window.scrollTo(0, 0);
+      if (calibrating) drawFitChart();
+    }
+    window.addEventListener('hashchange', showView);
+    window.addEventListener('resize', () => { if (!$('calibration').hidden) drawFitChart(); });
+
+    function tick() {
+      if (!state.connected) simStep();
+      stepAuto(performance.now());
+      const elapsed = Math.floor((Date.now()-state.started)/1000);
+      setText('duration', `${pad(Math.floor(elapsed/60))}:${pad(elapsed%60)}`);
+    }
+
+    // Restore this browser's settings, then start.
+    const savedAuto = store.get('auto', {});
+    for (const [key, [id]] of Object.entries(AUTO_INPUTS)) if (Number.isFinite(savedAuto?.[key])) $(id).value = savedAuto[key];
+    const savedTop = store.get('gameTop', null);
+    if (Number.isFinite(savedTop)) $('gameTopAngle').value = savedTop;
+    game.best = Number.isFinite(store.get('best', 0)) ? store.get('best', 0) : 0;
+    setExercise(store.get('exercise', 'auto'), true);
+    loadCalibration();
+    refreshCalibration();
+    showView();
+    setData({ angle: 0, pressure: 0 });
+    showStatus(); showActuator(); showAuto(); showKeys(); showGame(); refreshControls();
+    setInterval(tick, 100);
   </script>
 </body>
 </html>
