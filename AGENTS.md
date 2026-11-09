@@ -127,6 +127,14 @@ On Connect, Chrome and Edge open a port chooser. Firefox shows a popup, "Allow t
 ports?", with a "Select a serial port:" dropdown and **Allow** / **Block**. Pick the Uno (`usbmodem…`) and click
 Allow. Cancelling Chrome's chooser, or Block in Firefox, shows "No port selected."
 
+### Look
+
+A plain light theme: off-white page, white panels with thin grey borders, the system font and one blue accent, with
+no gradients, glows or shadows. There is no dark mode. The page colours are CSS variables in `:root`. The SVG finger
+and the trend chart use hex values written into the markup and `drawChart()`, so change those by hand to match.
+Each quantity keeps one colour everywhere: angle `--angle` (blue), loss `--loss` (green) and pressure `--pressure`
+(orange), shown as a dot by each readout and as its line on the chart. Readout numbers stay in the text colour.
+
 ### Without an Arduino: the simulator
 
 The page starts in simulator mode ("Manual simulator" in the panel header). The finger bends along a made-up sine
@@ -236,7 +244,7 @@ There are no automated tests in the repo. Changes so far have been checked like 
   - The trend chart plots loss and pressure on the angle's 0–120 scale with no axes of their own. It's labelled
     "Last 30 seconds · 10 Hz" but holds 120 samples (12 s at 10 Hz, 24 s at 5 rows/s), added per update rather than
     per time step.
-  - In the finger drawing, the dark sleeve completely covers the skin-coloured finger, the "fingertip" label stays at
+  - In the finger drawing, the grey sleeve completely covers the skin-coloured finger, the "fingertip" label stays at
     the straight-finger position, and the angle arc at the first knuckle shows the full angle although that joint
     bends only 35% of it.
   - The sidebar's patient details and the "Right index · calibrated" label are static placeholders, and the sidebar
