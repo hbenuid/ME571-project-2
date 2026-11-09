@@ -27,6 +27,9 @@ bool inflating = false;
 // Waveguide reading at rest, used as the reference for optical loss
 double waveguideBaseline = 0;
 
+// Absolute pressure with the actuator vented, subtracted to give bladder (gauge) pressure
+float pressureBaseline = 0;
+
 // Angle calibration: angle (deg) = ANGLE_A * loss^2 + ANGLE_B * loss + ANGLE_C, loss in dB.
 // Placeholder fit. Replace with coefficients measured on this sleeve.
 const double ANGLE_A = 3.1412;
@@ -60,6 +63,10 @@ float readForce() {
   }
 
   return conductance / 0.000000642857f;
+}
+
+float readPressurePsi() {
+  return mpr.readPressure() / 68.9476f;  // hPa to absolute PSI
 }
 
 // Print a number right-aligned in a column of the given width.
@@ -96,8 +103,9 @@ void setup() {
   Serial.println("Venting for 5 seconds. Leave the FSR released.");
   delay(5000);
 
-  // Take the optical baseline once the actuator has vented.
+  // Take the baselines once the actuator has vented.
   waveguideBaseline = analogRead(WAVEGUIDE_PIN);
+  pressureBaseline = readPressurePsi();
 
   Serial.println("Ready. Press and hold the FSR to inflate.");
 }
@@ -132,7 +140,7 @@ void loop() {
   }
   lastPrintMs = now;
 
-  float pressure_psi = mpr.readPressure() / 68.9476f;  // Absolute PSI
+  float pressure_psi = readPressurePsi() - pressureBaseline;  // Bladder (gauge) PSI
 
   int waveguideADC = analogRead(WAVEGUIDE_PIN);
   float waveguideVoltage = waveguideADC * (5.0f / 1023.0f);
