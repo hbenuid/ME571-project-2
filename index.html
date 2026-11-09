@@ -73,6 +73,7 @@
     .calibration input { margin-top: 5px; }
     button { border: 0; border-radius: 7px; padding: 10px 14px; cursor: pointer; color: #06201d; background: var(--teal); font-weight: 700; }
     button.secondary { color: var(--ink); background: #214448; }
+    button.secondary.active { color: #06201d; background: var(--teal); }
     button:hover { filter: brightness(1.12); }
     .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
     .button-row .hint { margin: 0; }
@@ -143,6 +144,8 @@
             <div class="control-group full"><label for="connectBtn">Arduino over USB</label>
               <div class="button-row"><button id="connectBtn">Connect to Arduino</button><span class="hint" id="serialStatus"></span></div>
               <p class="hint">Chrome or Edge only. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight.</p>
+              <div class="button-row"><button class="secondary" id="inflateBtn" disabled>Inflate</button><button class="secondary" id="holdBtn" disabled>Hold</button><button class="secondary" id="ventBtn" disabled>Vent</button><span class="hint" id="controlMode"></span></div>
+              <p class="hint">Inflate runs the pump until you press Hold or Vent, or until the pressure limit set in <code>src/main.cpp</code>. Pressing the FSR vents straight away. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
             </div>
           </div>
         </section>
@@ -234,8 +237,28 @@
 
     // Arduino over USB (Web Serial API, Chrome/Edge). src/main.cpp prints a
     // whitespace-separated table; its header row names the columns.
-    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
-    let columns = DEFAULT_COLUMNS, serialReader = null;
+    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
+    let columns = DEFAULT_COLUMNS, serialReader = null, serialWriter = null;
+
+    // Pump control. The sketch takes single characters: I inflate, H hold, V vent,
+    // K keep-alive (it vents if none arrive for 1.5 s), X hand control back to the FSR.
+    const encoder = new TextEncoder();
+    const MODE_TEXT = { FSR: 'FSR in control', INFL: 'Inflating', HOLD: 'Holding', VENT: 'Venting', STOP: 'Stopped by the FSR, vented', MAX: 'At the pressure limit, holding' };
+    const CONTROL_BUTTONS = { inflateBtn: 'INFL', holdBtn: 'HOLD', ventBtn: 'VENT' };
+
+    function sendCommand(command) {
+      return serialWriter ? serialWriter.write(encoder.encode(command)).catch(() => {}) : Promise.resolve();
+    }
+    function showArduinoMode(mode) {
+      $('controlMode').textContent = mode ? (MODE_TEXT[mode] || mode) : '';
+      for (const [id, buttonMode] of Object.entries(CONTROL_BUTTONS)) $(id).classList.toggle('active', mode === buttonMode);
+    }
+    function enableControls(enabled) {
+      for (const id of Object.keys(CONTROL_BUTTONS)) $(id).disabled = !enabled;
+    }
+    $('inflateBtn').addEventListener('click', () => sendCommand('I'));
+    $('holdBtn').addEventListener('click', () => sendCommand('H'));
+    $('ventBtn').addEventListener('click', () => sendCommand('V'));
 
     function handleSerialLine(line) {
       const text = line.trim(), cells = text.split(/\s+/);
@@ -247,6 +270,9 @@
       const column = name => parseFloat(cells[columns.indexOf(name)]);  // "--" parses as NaN and is skipped
       setData({ angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)') }, true);
       $('inputMode').textContent = 'Arduino · live';
+      showArduinoMode(cells[columns.indexOf('Mode')]);
+      enableControls(true);  // only once the sketch has finished its startup vent
+      sendCommand('K');      // answering each row keeps the sketch from timing out
     }
 
     async function connectArduino() {
@@ -265,6 +291,7 @@
       const decoder = new TextDecoderStream();
       const piped = port.readable.pipeTo(decoder.writable).catch(() => {});
       serialReader = decoder.readable.getReader();
+      serialWriter = port.writable.getWriter();
       columns = DEFAULT_COLUMNS;
       state.connected = true;
       pauseSimulation();  // so a dropped cable doesn't fall back to fake motion
@@ -286,6 +313,12 @@
       } finally {
         serialReader.releaseLock();
         serialReader = null;
+        enableControls(false);
+        showArduinoMode('');
+        // Vent and hand back to the FSR. Don't wait long: if the cable is out, the sketch times out on its own.
+        await Promise.race([sendCommand('X'), new Promise(resolve => setTimeout(resolve, 500))]);
+        serialWriter.releaseLock();
+        serialWriter = null;
         await piped;
         await port.close().catch(() => {});
         state.connected = false;
