@@ -27,6 +27,12 @@ bool inflating = false;
 // Waveguide reading at rest, used as the reference for optical loss
 double waveguideBaseline = 0;
 
+// Angle calibration: angle (deg) = ANGLE_A * loss^2 + ANGLE_B * loss + ANGLE_C, loss in dB.
+// Placeholder fit. Replace with coefficients measured on this sleeve.
+const double ANGLE_A = 3.1412;
+const double ANGLE_B = 84.948;
+const double ANGLE_C = 1.1066;
+
 // Serial output
 const unsigned long PRINT_INTERVAL_MS = 200;  // 5 rows per second
 const unsigned long HEADER_EVERY = 20;        // Rows between repeated headers
@@ -135,12 +141,13 @@ void loop() {
   bool lossValid = waveguideADC > 0 && waveguideBaseline > 0;
   double loss = lossValid ? 10 * log10(waveguideBaseline / waveguideADC) : 0;  // Optical loss in dB
 
-  // double angle = 3.1412 * sq(loss) + 84.948 * loss + 1.1066;  // Calibration: angle vs loss
-  // if (angle < 0) angle = 0;
+  double angle = ANGLE_A * sq(loss) + ANGLE_B * loss + ANGLE_C;  // Bending angle in degrees
+  if (angle < 0) angle = 0;
 
+  // The dashboard (index.html) finds columns by these header names.
   if (rowCount % HEADER_EVERY == 0) {
     Serial.println();
-    Serial.println(" Force(g)  Pump  Press(psi)  Loss(dB)  Wave(V)");
+    Serial.println(" Force(g)  Pump  Press(psi)  Loss(dB)  Angle(deg)  Wave(V)");
   }
   rowCount++;
 
@@ -149,8 +156,10 @@ void loop() {
   printValue(pressure_psi, 12, 2);
   if (lossValid) {
     printValue(loss, 10, 2);
+    printValue(angle, 12, 1);
   } else {
     printText("--", 10);
+    printText("--", 12);
   }
   printValue(waveguideVoltage, 9, 2);
   Serial.println();
