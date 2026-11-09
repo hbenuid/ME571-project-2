@@ -6,83 +6,91 @@
   <title>FlexSense | Finger Rehab Visualizer</title>
   <style>
     :root {
-      --ink: #e8f2f1; --muted: #91aaa9; --panel: #132a2d; --panel-2: #193438;
-      --edge: #285154; --teal: #43d5bb; --blue: #70a9ff; --amber: #ffbf69;
-      --danger: #ff7d84; --bg: #081719;
+      --bg: #f5f5f3; --panel: #ffffff; --stage: #f8f8f6; --hover: #f0f0ed;
+      --edge: #e3e3df; --field: #d4d4cf; --ink: #1b1b1a; --muted: #62615c;
+      --accent: #2a78d6; --accent-dark: #1f63b5; --ok: #1f9d55; --danger: #d03b3b;
+      --angle: #2a78d6; --loss: #1baf7a; --pressure: #eb6834;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
-    .app { display: grid; grid-template-columns: 276px 1fr; min-height: 100vh; }
-    aside { padding: 28px 20px; background: #0c2022; border-right: 1px solid var(--edge); }
-    .brand { display: flex; gap: 12px; align-items: center; margin-bottom: 38px; }
-    .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: #06201d; background: var(--teal); font-weight: 900; box-shadow: 0 0 25px #43d5bb55; }
-    .brand strong { display: block; letter-spacing: .04em; font-size: 15px; }
-    .brand small { color: var(--muted); font-size: 11px; }
-    nav { display: grid; gap: 6px; margin-bottom: 34px; }
-    nav a { padding: 11px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; }
-    nav a.active, nav a:hover { color: var(--ink); background: #183638; }
-    .side-label, label { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-    .session { padding: 14px; border: 1px solid var(--edge); border-radius: 10px; background: #102629; }
-    .session-row { display: flex; justify-content: space-between; margin: 9px 0; color: var(--muted); font-size: 12px; }
-    .session-row b { color: var(--ink); font-weight: 600; }
-    main { padding: 28px 34px 40px; max-width: 1540px; width: 100%; margin: auto; }
-    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 26px; }
-    h1 { margin: 0 0 5px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.03em; }
+    body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    aside { padding: 24px 16px; background: var(--panel); border-right: 1px solid var(--edge); }
+    .brand { display: flex; gap: 10px; align-items: center; margin-bottom: 28px; }
+    .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: #fff; background: var(--ink); font-weight: 700; font-size: 13px; }
+    .brand strong { display: block; font-size: 15px; }
+    .brand small { color: var(--muted); font-size: 12px; }
+    nav { display: grid; gap: 2px; margin-bottom: 28px; }
+    nav a { padding: 8px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; }
+    nav a.active, nav a:hover { color: var(--ink); background: var(--hover); }
+    .side-label, label { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .session { margin-top: 4px; }
+    .session-row { display: flex; justify-content: space-between; margin: 8px 0; color: var(--muted); font-size: 13px; }
+    .session-row b { color: var(--ink); font-weight: 500; }
+    main { padding: 28px 32px 40px; max-width: 1540px; width: 100%; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px; }
+    h1 { margin: 0 0 4px; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
     .subtitle { color: var(--muted); }
-    .status { display: flex; align-items: center; gap: 8px; color: var(--teal); border: 1px solid #28665e; border-radius: 999px; padding: 8px 13px; font-size: 12px; background: #102a2a; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 11px var(--teal); }
-    .dot.off { background: var(--danger); box-shadow: none; }
-    .layout { display: grid; grid-template-columns: minmax(380px, 1.08fr) minmax(390px, .92fr); gap: 18px; }
-    .panel { border: 1px solid var(--edge); border-radius: 13px; background: linear-gradient(145deg, #132b2e, #102326); overflow: hidden; }
-    .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid #214345; }
-    .panel-head h2 { margin: 0; font-size: 15px; }
-    .panel-head span { color: var(--muted); font-size: 11px; }
-    .finger-stage { height: 442px; position: relative; overflow: hidden; background: radial-gradient(circle at 42% 52%, #20484a 0, #122d30 35%, #102326 74%); }
-    .finger-stage:after { content: ""; position: absolute; inset: auto 0 0; height: 70px; background: linear-gradient(transparent, #0d2022); pointer-events: none; }
-    #finger { width: 100%; height: 100%; }
-    .angle-badge { position: absolute; left: 20px; top: 20px; padding: 11px 14px; border-radius: 10px; background: #0b1c1ee8; border: 1px solid #2f6260; }
-    .angle-badge small { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
-    .angle-badge strong { display: block; color: var(--teal); font-size: 27px; line-height: 1.1; }
-    .stage-legend { position: absolute; bottom: 17px; left: 20px; right: 20px; display: flex; justify-content: space-between; color: #9db9b7; font-size: 11px; }
+    .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; padding: 6px 0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+    .dot.off { background: var(--danger); }
+    .layout { display: grid; grid-template-columns: minmax(380px, 1.08fr) minmax(390px, .92fr); gap: 16px; }
+    .panel { border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); overflow: hidden; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--edge); }
+    .panel-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+    .panel-head span { color: var(--muted); font-size: 12px; }
+    .finger-stage { height: 442px; position: relative; overflow: hidden; background: var(--stage); }
+    .layout > .panel:first-child { display: flex; flex-direction: column; }
+    .layout > .panel:first-child .finger-stage { flex: 1; height: auto; min-height: 442px; }
+    #finger { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .angle-badge { position: absolute; left: 18px; top: 18px; padding: 8px 12px; border-radius: 6px; background: var(--panel); border: 1px solid var(--edge); }
+    .angle-badge small { display: block; color: var(--muted); font-size: 12px; }
+    .angle-badge strong { display: block; color: var(--ink); font-size: 28px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+    .stage-legend { position: absolute; bottom: 14px; left: 18px; right: 18px; display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
     .stage-legend span { display: inline-flex; gap: 7px; align-items: center; }
-    .legend-line { width: 20px; height: 3px; border-radius: 2px; background: var(--teal); }
-    .legend-dash { width: 20px; border-top: 2px dashed #9db9b7; }
-    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px 20px 20px; }
-    .metric { padding: 12px; border-radius: 9px; background: #102528; border: 1px solid #24494b; }
-    .metric-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
-    .metric-value { margin-top: 5px; font-size: 23px; font-weight: 700; }
-    .metric-value small { color: var(--muted); font-size: 12px; font-weight: 500; }
-    .metric:nth-child(1) .metric-value { color: var(--teal); }
-    .metric:nth-child(2) .metric-value { color: var(--blue); }
-    .metric:nth-child(3) .metric-value { color: var(--amber); }
+    .legend-line { width: 20px; height: 3px; border-radius: 2px; background: var(--accent); }
+    .legend-dash { width: 20px; border-top: 2px dashed #a9a8a2; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--edge); }
+    .metric { padding: 14px 18px; }
+    .metric + .metric { border-left: 1px solid var(--edge); }
+    .metric-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+    .metric-label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+    .metric:nth-child(1) .metric-label::before { background: var(--loss); }
+    .metric:nth-child(2) .metric-label::before { background: var(--angle); }
+    .metric:nth-child(3) .metric-label::before { background: var(--pressure); }
+    .metric-value { margin-top: 4px; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .metric-value small { color: var(--muted); font-size: 13px; font-weight: 400; }
     .chart-panel { grid-column: 1 / -1; }
-    .chart-wrap { padding: 4px 20px 12px; }
+    .chart-wrap { padding: 8px 18px 12px; }
     #chart { width: 100%; height: 242px; display: block; }
-    .axis-label { fill: #759391; font-size: 10px; }
-    .gridline { stroke: #234447; stroke-width: 1; }
-    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 20px 20px; }
-    .control-group { padding: 14px; border-radius: 9px; background: #102528; border: 1px solid #24494b; }
+    .axis-label { fill: var(--muted); font-size: 11px; }
+    .gridline { stroke: #ecece8; stroke-width: 1; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; }
+    .control-group { padding: 16px 18px; border-bottom: 1px solid var(--edge); }
+    .control-group:last-child { border-bottom: 0; }
+    .control-group:not(.full) + .control-group:not(.full) { border-left: 1px solid var(--edge); }
     .control-group.full { grid-column: 1/-1; }
-    input[type=range] { width: 100%; accent-color: var(--teal); margin: 14px 0 5px; }
-    input[type=number], input[type=text], select { width: 100%; padding: 10px; color: var(--ink); background: #0b1d20; border: 1px solid #2b5556; border-radius: 6px; outline: none; }
-    input:focus, select:focus { border-color: var(--teal); }
+    input[type=range] { width: 100%; accent-color: var(--accent); margin: 12px 0 4px; }
+    input[type=number], input[type=text], select { width: 100%; margin-top: 6px; padding: 8px 10px; color: var(--ink); background: #fff; border: 1px solid var(--field); border-radius: 6px; font: inherit; outline: none; }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #2a78d626; }
     .control-title { display: flex; justify-content: space-between; align-items: center; }
-    .control-title b { color: var(--teal); font-size: 16px; }
-    .calibration { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-top: 10px; }
-    .calibration label { letter-spacing: .03em; font-size: 10px; }
-    .calibration input { margin-top: 5px; }
-    button { border: 0; border-radius: 7px; padding: 10px 14px; cursor: pointer; color: #06201d; background: var(--teal); font-weight: 700; }
-    button.secondary { color: var(--ink); background: #214448; }
-    button.secondary.active { color: #06201d; background: var(--teal); }
-    button:hover { filter: brightness(1.12); }
+    .control-title b { color: var(--ink); font-size: 16px; font-weight: 600; }
+    .calibration { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .calibration label { font-weight: 500; }
+    .calibration input { margin-top: 4px; }
+    button { border: 1px solid var(--accent); border-radius: 6px; padding: 8px 14px; cursor: pointer; color: #fff; background: var(--accent); font: inherit; font-weight: 600; }
+    button:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+    button.secondary { color: var(--ink); background: #fff; border-color: var(--field); }
+    button.secondary:hover:not(:disabled) { background: var(--hover); border-color: var(--field); }
+    button.secondary.active, button.secondary.active:hover:not(:disabled) { color: #fff; background: var(--accent); border-color: var(--accent); }
+    button:disabled { opacity: .5; cursor: default; }
     .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
     .button-row .hint { margin: 0; }
-    .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 9px; }
-    button:disabled { opacity: .6; cursor: default; }
-    .hint { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
-    code { color: #a7e6dc; background: #0b1d20; padding: 2px 4px; border-radius: 3px; }
-    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 14px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
-    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } }
+    .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
+    .source-row input { margin-top: 0; }
+    .hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    code { color: var(--ink); background: var(--hover); padding: 1px 4px; border-radius: 4px; font-size: 12px; }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 16px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
+    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .control-group:not(.full) + .control-group:not(.full) { border-left: 0; } .metric + .metric { border-left: 0; border-top: 1px solid var(--edge); } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } }
   </style>
 </head>
 <body>
@@ -108,16 +116,16 @@
           <div class="finger-stage">
             <svg id="finger" viewBox="0 0 700 420" role="img" aria-label="Animated virtual finger showing bend angle">
               <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-              <path d="M92 220 C180 203 255 211 330 221" stroke="#547c79" stroke-width="28" stroke-linecap="round" opacity=".3"/>
-              <path id="fingerShadow" d="" fill="none" stroke="#061214" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+              <path d="M92 220 C180 203 255 211 330 221" stroke="#000" stroke-width="28" stroke-linecap="round" opacity=".05"/>
+              <path id="fingerShadow" display="none" d="" fill="none" stroke="#061214" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
               <path id="fingerBody" d="" fill="none" stroke="#e9b18a" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
-              <path id="sleeve" d="" fill="none" stroke="#182a2e" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-              <path id="sleeveGlow" d="" fill="none" stroke="#43d5bb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-              <path id="fingerHighlight" d="" fill="none" stroke="#ffd0aa" stroke-width="9" stroke-linecap="round" opacity=".55"/>
-              <circle id="joint1" r="8" fill="#43d5bb" stroke="#d7fffa" stroke-width="2"/><circle id="joint2" r="8" fill="#43d5bb" stroke="#d7fffa" stroke-width="2"/><circle id="joint3" r="8" fill="#43d5bb" stroke="#d7fffa" stroke-width="2"/>
-              <path id="angleArc" d="" fill="none" stroke="#a8d7d1" stroke-width="2" stroke-dasharray="4 5"/>
-              <text id="arcLabel" fill="#d9f4f0" font-size="13" font-weight="700"></text>
-              <text x="54" y="196" fill="#8eaaa8" font-size="12">wrist</text><text x="553" y="215" fill="#8eaaa8" font-size="12">fingertip</text>
+              <path id="sleeve" d="" fill="none" stroke="#c9ccd2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="sleeveGlow" d="" fill="none" stroke="#2a78d6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="fingerHighlight" display="none" d="" fill="none" stroke="#ffd0aa" stroke-width="9" stroke-linecap="round" opacity=".55"/>
+              <circle id="joint1" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/><circle id="joint2" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/><circle id="joint3" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/>
+              <path id="angleArc" d="" fill="none" stroke="#a9a8a2" stroke-width="2" stroke-dasharray="4 5"/>
+              <text id="arcLabel" fill="#1b1b1a" font-size="13" font-weight="700"></text>
+              <text x="54" y="196" fill="#8a8984" font-size="12">wrist</text><text x="553" y="215" fill="#8a8984" font-size="12">fingertip</text>
             </svg>
             <div class="angle-badge"><small>Live bend angle</small><strong><span id="angleReadout">42</span>°</strong></div>
             <div class="stage-legend"><span><i class="legend-line"></i> optical sleeve signal</span><span><i class="legend-dash"></i> neutral alignment</span></div>
@@ -215,9 +223,9 @@
       let html = '';
       [0, .25, .5, .75, 1].forEach(t => { const y = pad.t + t*plotH; html += `<line class="gridline" x1="${pad.l}" x2="${W-pad.r}" y1="${y}" y2="${y}"/><text class="axis-label" x="5" y="${y+4}">${Math.round(120-t*120)}°</text>`; });
       html += `<text class="axis-label" x="${pad.l}" y="${H-5}">30 sec ago</text><text class="axis-label" x="${W-60}" y="${H-5}">now</text>`;
-      const series = [{key:'angle', color:'#70a9ff', max:120}, {key:'loss', color:'#43d5bb', max:8}, {key:'pressure', color:'#ffbf69', max:24}];
-      series.forEach(s => { const points = state.history.map((v,i) => `${pad.l + (state.history.length < 2 ? 0 : i/(MAX_SAMPLES-1)*plotW)},${pad.t+plotH-clamp(v[s.key]/s.max,0,1)*plotH}`).join(' '); html += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`; });
-      html += `<g transform="translate(${W-310},8)"><line x1="0" x2="18" y1="4" y2="4" stroke="#70a9ff" stroke-width="3"/><text class="axis-label" x="24" y="8">Angle (°)</text><line x1="83" x2="101" y1="4" y2="4" stroke="#43d5bb" stroke-width="3"/><text class="axis-label" x="107" y="8">Loss (dB)</text><line x1="174" x2="192" y1="4" y2="4" stroke="#ffbf69" stroke-width="3"/><text class="axis-label" x="198" y="8">Pressure (PSI)</text></g>`;
+      const series = [{key:'angle', color:'#2a78d6', max:120}, {key:'loss', color:'#1baf7a', max:8}, {key:'pressure', color:'#eb6834', max:24}];
+      series.forEach(s => { const points = state.history.map((v,i) => `${pad.l + (state.history.length < 2 ? 0 : i/(MAX_SAMPLES-1)*plotW)},${pad.t+plotH-clamp(v[s.key]/s.max,0,1)*plotH}`).join(' '); html += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`; });
+      html += `<g transform="translate(${W-310},8)"><line x1="0" x2="18" y1="4" y2="4" stroke="#2a78d6" stroke-width="3"/><text class="axis-label" x="24" y="8">Angle (°)</text><line x1="83" x2="101" y1="4" y2="4" stroke="#1baf7a" stroke-width="3"/><text class="axis-label" x="107" y="8">Loss (dB)</text><line x1="174" x2="192" y1="4" y2="4" stroke="#eb6834" stroke-width="3"/><text class="axis-label" x="198" y="8">Pressure (PSI)</text></g>`;
       chart.innerHTML = html;
     }
     function tick() {
