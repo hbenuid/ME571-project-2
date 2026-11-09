@@ -119,9 +119,13 @@ monitor to test, but without keep-alives the sketch vents again after 1.5 s.
 
 ## Dashboard (`index.html`)
 
-Open the file directly in **Chrome or Edge** on a desktop. It uses the Web Serial API, which Safari and Firefox don't
-have. `file://` pages count as a secure context, so no web server is needed. Only one program can hold the serial
-port, so close the PlatformIO serial monitor first.
+Open the file directly in **Chrome, Edge or Firefox 151+** on a desktop. It uses the Web Serial API, which Safari
+doesn't have (Firefox added it in version 151, May 2026). `file://` pages count as a secure context, so no web server
+is needed. Only one program can hold the serial port, so close the PlatformIO serial monitor first.
+
+On Connect, Chrome and Edge open a port chooser. Firefox shows a popup, "Allow this local file to access your serial
+ports?", with a "Select a serial port:" dropdown and **Allow** / **Block**. Pick the Uno (`usbmodem…`) and click
+Allow. Cancelling Chrome's chooser, or Block in Firefox, shows "No port selected."
 
 ### Without an Arduino: the simulator
 
@@ -139,6 +143,11 @@ wave, or follows the Bending angle slider once you drag it. Loss comes from the 
   recorded. `--` values are skipped, so the last good value stays on screen.
 - The angle readouts show the real value. Only the finger drawing is capped at 120°.
 - The simulation pauses on connect, so a dropped cable doesn't fall back to fake motion.
+- If the connection ends without Disconnect being clicked (cable pulled, board unplugged), the page shows
+  `Connection lost: …` next to the Connect button, turns the pump controls off and keeps the recording. Chrome
+  reports this as a stream error with its own message. Firefox ends the stream quietly, so the page tracks whether
+  Disconnect was clicked (`userDisconnect`) and otherwise shows `Connection lost: The Arduino was disconnected.`
+  The sketch vents on its own 1.5 s later either way.
 
 ### Pump control
 
@@ -201,7 +210,17 @@ There are no automated tests in the repo. Changes so far have been checked like 
 3. **Dashboard in headless Chromium.** Replace `navigator.serial` with a fake port whose `readable` replays text in
    the sketch's exact column widths (split mid-line) and whose `writable` records the commands sent. Check the
    readouts, buttons, commands and CSV.
-4. Then test on the real hardware, with the pressure limit set correctly.
+4. **Dashboard in headless Firefox (151+), on Firefox's real serial code.** Drive Firefox with WebDriver BiDi
+   (`firefox --headless --profile <throwaway> --remote-debugging-port=0`, no extra install needed). With the pref
+   `dom.webserial.testing.enabled` set to `true`, `requestPort()` picks a mock Arduino Uno (`test-device-1`, USB
+   vendor 0x2341, product 0x0043) without a prompt, and the mock echoes back whatever is written to it. Write the
+   sketch's output into the port through the page's `serialWriter` (a top-level `let`, reachable from
+   `script.evaluate`) and record the page's own commands instead of writing them, or the echoed `K`s end up in the
+   data. `navigator.serial.simulateDeviceDisconnection('test-device-1')` simulates a pulled cable. To see or answer
+   the real permission popup instead, start Firefox with `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1` and read
+   `PopupNotifications` in the chrome context (`browsingContext.getTree` with `moz:scope: "chrome"`); the
+   notification id is `webSerial-choosePort`.
+5. Then test on the real hardware, with the pressure limit set correctly.
 
 ## Known gaps and open items
 

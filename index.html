@@ -144,7 +144,7 @@
             </div>
             <div class="control-group full"><label for="connectBtn">Arduino over USB</label>
               <div class="button-row"><button id="connectBtn">Connect to Arduino</button><span class="hint" id="serialStatus"></span></div>
-              <p class="hint">Chrome or Edge only. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight.</p>
+              <p class="hint">Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight.</p>
               <div class="button-row"><button class="secondary" id="inflateBtn" disabled>Inflate</button><button class="secondary" id="holdBtn" disabled>Hold</button><button class="secondary" id="ventBtn" disabled>Vent</button><span class="hint" id="controlMode"></span></div>
               <p class="hint">Inflate runs the pump until you press Hold or Vent, or until the pressure limit set in <code>src/main.cpp</code>. Pressing the FSR vents straight away. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
             </div>
@@ -240,10 +240,11 @@
     $('simulateBtn').addEventListener('click', () => { state.running = !state.running; $('simulateBtn').textContent = state.running ? 'Pause simulation' : 'Resume simulation'; showStatus(); });
     $('neutralBtn').addEventListener('click', () => { setData({angle:0}); pauseSimulation(); });
 
-    // Arduino over USB (Web Serial API, Chrome/Edge). src/main.cpp prints a
+    // Arduino over USB (Web Serial API: Chrome, Edge, Firefox 151+). src/main.cpp prints a
     // whitespace-separated table; its header row names the columns.
     const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
     let columns = DEFAULT_COLUMNS, serialReader = null, serialWriter = null;
+    let userDisconnect = false;  // set when Disconnect is clicked, so any other end of the connection reads as lost
 
     // Pump control. The sketch takes single characters: I inflate, H hold, V vent,
     // K keep-alive (it vents if none arrive for 1.5 s), X hand control back to the FSR.
@@ -337,7 +338,7 @@
     }
 
     async function connectArduino() {
-      if (!('serial' in navigator)) { $('serialStatus').textContent = 'This browser has no Web Serial. Use Chrome or Edge.'; return; }
+      if (!('serial' in navigator)) { $('serialStatus').textContent = 'This browser has no Web Serial. Use Chrome, Edge or Firefox 151 or later.'; return; }
       const unsaved = unsavedRows();
       if (unsaved && !confirm(`The last recording has ${unsaved} rows that haven't been downloaded. Discard them and start a new recording?`)) return;
       let port;
@@ -362,11 +363,16 @@
       $('connectBtn').textContent = 'Disconnect';
       $('inputMode').textContent = 'Arduino · waiting for data';
       $('serialStatus').textContent = '';
+      userDisconnect = false;
       let buffer = '';
       try {
         while (true) {
           const { value, done } = await serialReader.read();
-          if (done) break;
+          if (done) {
+            // Chrome reports a pulled cable as an error (caught below). Firefox just ends the stream.
+            if (!userDisconnect) $('serialStatus').textContent = 'Connection lost: The Arduino was disconnected.';
+            break;
+          }
           buffer += value;
           const lines = buffer.split('\n');
           buffer = lines.pop();  // keep any partial line for the next chunk
@@ -394,7 +400,11 @@
     }
 
     // Cancelling the reader ends the read loop above, which closes the port.
-    $('connectBtn').addEventListener('click', () => serialReader ? serialReader.cancel() : connectArduino());
+    $('connectBtn').addEventListener('click', () => {
+      if (!serialReader) return connectArduino();
+      userDisconnect = true;
+      serialReader.cancel();
+    });
     setData({angle:42, pressure:8.6, loss:lossFromAngle(42)}); setInterval(tick, 100); 
   </script>
 </body>
