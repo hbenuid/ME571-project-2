@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlexSense | Finger Rehab Visualizer</title>
+  <style>
+    :root {
+      --ink: #e8f2f1; --muted: #91aaa9; --panel: #132a2d; --panel-2: #193438;
+      --edge: #285154; --teal: #43d5bb; --blue: #70a9ff; --amber: #ffbf69;
+      --danger: #ff7d84; --bg: #081719;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+    .app { display: grid; grid-template-columns: 276px 1fr; min-height: 100vh; }
+    aside { padding: 28px 20px; background: #0c2022; border-right: 1px solid var(--edge); }
+    .brand { display: flex; gap: 12px; align-items: center; margin-bottom: 38px; }
+    .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: #06201d; background: var(--teal); font-weight: 900; box-shadow: 0 0 25px #43d5bb55; }
+    .brand strong { display: block; letter-spacing: .04em; font-size: 15px; }
+    .brand small { color: var(--muted); font-size: 11px; }
+    nav { display: grid; gap: 6px; margin-bottom: 34px; }
+    nav a { padding: 11px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; }
+    nav a.active, nav a:hover { color: var(--ink); background: #183638; }
+    .side-label, label { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .session { padding: 14px; border: 1px solid var(--edge); border-radius: 10px; background: #102629; }
+    .session-row { display: flex; justify-content: space-between; margin: 9px 0; color: var(--muted); font-size: 12px; }
+    .session-row b { color: var(--ink); font-weight: 600; }
+    main { padding: 28px 34px 40px; max-width: 1540px; width: 100%; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 26px; }
+    h1 { margin: 0 0 5px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.03em; }
+    .subtitle { color: var(--muted); }
+    .status { display: flex; align-items: center; gap: 8px; color: var(--teal); border: 1px solid #28665e; border-radius: 999px; padding: 8px 13px; font-size: 12px; background: #102a2a; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 11px var(--teal); }
+    .dot.off { background: var(--danger); box-shadow: none; }
+    .layout { display: grid; grid-template-columns: minmax(380px, 1.08fr) minmax(390px, .92fr); gap: 18px; }
+    .panel { border: 1px solid var(--edge); border-radius: 13px; background: linear-gradient(145deg, #132b2e, #102326); overflow: hidden; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid #214345; }
+    .panel-head h2 { margin: 0; font-size: 15px; }
+    .panel-head span { color: var(--muted); font-size: 11px; }
+    .finger-stage { height: 442px; position: relative; overflow: hidden; background: radial-gradient(circle at 42% 52%, #20484a 0, #122d30 35%, #102326 74%); }
+    .finger-stage:after { content: ""; position: absolute; inset: auto 0 0; height: 70px; background: linear-gradient(transparent, #0d2022); pointer-events: none; }
+    #finger { width: 100%; height: 100%; }
+    .angle-badge { position: absolute; left: 20px; top: 20px; padding: 11px 14px; border-radius: 10px; background: #0b1c1ee8; border: 1px solid #2f6260; }
+    .angle-badge small { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    .angle-badge strong { display: block; color: var(--teal); font-size: 27px; line-height: 1.1; }
+    .stage-legend { position: absolute; bottom: 17px; left: 20px; right: 20px; display: flex; justify-content: space-between; color: #9db9b7; font-size: 11px; }
+    .stage-legend span { display: inline-flex; gap: 7px; align-items: center; }
+    .legend-line { width: 20px; height: 3px; border-radius: 2px; background: var(--teal); }
+    .legend-dash { width: 20px; border-top: 2px dashed #9db9b7; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px 20px 20px; }
+    .metric { padding: 12px; border-radius: 9px; background: #102528; border: 1px solid #24494b; }
+    .metric-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .metric-value { margin-top: 5px; font-size: 23px; font-weight: 700; }
+    .metric-value small { color: var(--muted); font-size: 12px; font-weight: 500; }
+    .metric:nth-child(1) .metric-value { color: var(--teal); }
+    .metric:nth-child(2) .metric-value { color: var(--blue); }
+    .metric:nth-child(3) .metric-value { color: var(--amber); }
+    .chart-panel { grid-column: 1 / -1; }
+    .chart-wrap { padding: 4px 20px 12px; }
+    #chart { width: 100%; height: 242px; display: block; }
+    .axis-label { fill: #759391; font-size: 10px; }
+    .gridline { stroke: #234447; stroke-width: 1; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 20px 20px; }
+    .control-group { padding: 14px; border-radius: 9px; background: #102528; border: 1px solid #24494b; }
+    .control-group.full { grid-column: 1/-1; }
+    input[type=range] { width: 100%; accent-color: var(--teal); margin: 14px 0 5px; }
+    input[type=number], input[type=text], select { width: 100%; padding: 10px; color: var(--ink); background: #0b1d20; border: 1px solid #2b5556; border-radius: 6px; outline: none; }
+    input:focus, select:focus { border-color: var(--teal); }
+    .control-title { display: flex; justify-content: space-between; align-items: center; }
+    .control-title b { color: var(--teal); font-size: 16px; }
+    .calibration { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-top: 10px; }
+    .calibration label { letter-spacing: .03em; font-size: 10px; }
+    .calibration input { margin-top: 5px; }
+    button { border: 0; border-radius: 7px; padding: 10px 14px; cursor: pointer; color: #06201d; background: var(--teal); font-weight: 700; }
+    button.secondary { color: var(--ink); background: #214448; }
+    button:hover { filter: brightness(1.12); }
+    .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+    .button-row .hint { margin: 0; }
+    button:disabled { opacity: .6; cursor: default; }
+    .hint { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
+    code { color: #a7e6dc; background: #0b1d20; padding: 2px 4px; border-radius: 3px; }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 14px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
+    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand"><div class="brand-mark">FS</div><div><strong>FLEXSENSE</strong><small>Rehabilitation Suite</small></div></div>
+      <nav><a class="active" href="#overview">◉ &nbsp; Live session</a><a href="#trends">⌁ &nbsp; Trends</a><a href="#calibration">⚙ &nbsp; Calibration</a></nav>
+      <span class="side-label">Session</span>
+      <div class="session">
+        <div class="session-row"><span>Patient</span><b>Demo patient</b></div>
+        <div class="session-row"><span>Exercise</span><b>Finger flexion</b></div>
+        <div class="session-row"><span>Duration</span><b id="duration">00:00</b></div>
+      </div>
+    </aside>
+    <main>
+      <header id="overview">
+        <div><h1>Live session</h1><div class="subtitle">Optical finger-sleeve feedback for guided rehab exercises</div></div>
+        <div class="status" id="status"><i class="dot"></i><span>Simulation active</span></div>
+      </header>
+      <section class="layout">
+        <section class="panel">
+          <div class="panel-head"><h2>Articulated finger</h2><span>Right index · calibrated</span></div>
+          <div class="finger-stage">
+            <svg id="finger" viewBox="0 0 700 420" role="img" aria-label="Animated virtual finger showing bend angle">
+              <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <path d="M92 220 C180 203 255 211 330 221" stroke="#547c79" stroke-width="28" stroke-linecap="round" opacity=".3"/>
+              <path id="fingerShadow" d="" fill="none" stroke="#061214" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+              <path id="fingerBody" d="" fill="none" stroke="#e9b18a" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="sleeve" d="" fill="none" stroke="#182a2e" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="sleeveGlow" d="" fill="none" stroke="#43d5bb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+              <path id="fingerHighlight" d="" fill="none" stroke="#ffd0aa" stroke-width="9" stroke-linecap="round" opacity=".55"/>
+              <circle id="joint1" r="8" fill="#43d5bb" stroke="#d7fffa" stroke-width="2"/><circle id="joint2" r="8" fill="#43d5bb" stroke="#d7fffa" stroke-width="2"/><circle id="joint3" r="8" fill="#43d5bb" stroke="#d7fffa" stroke-width="2"/>
+              <path id="angleArc" d="" fill="none" stroke="#a8d7d1" stroke-width="2" stroke-dasharray="4 5"/>
+              <text id="arcLabel" fill="#d9f4f0" font-size="13" font-weight="700"></text>
+              <text x="54" y="196" fill="#8eaaa8" font-size="12">wrist</text><text x="553" y="215" fill="#8eaaa8" font-size="12">fingertip</text>
+            </svg>
+            <div class="angle-badge"><small>Live bend angle</small><strong><span id="angleReadout">42</span>°</strong></div>
+            <div class="stage-legend"><span><i class="legend-line"></i> optical sleeve signal</span><span><i class="legend-dash"></i> neutral alignment</span></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">2.84</span> <small>dB</small></div></div>
+            <div class="metric"><div class="metric-label">Bending angle</div><div class="metric-value"><span id="metricAngle">42</span> <small>deg</small></div></div>
+            <div class="metric"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">8.6</span> <small>PSI</small></div></div>
+          </div>
+        </section>
+        <section class="panel" id="calibration">
+          <div class="panel-head"><h2>Hardware input & calibration</h2><span id="inputMode">Manual simulator</span></div>
+          <div class="controls">
+            <div class="control-group full">
+              <div class="control-title"><label for="angleSlider">Bending angle</label><b><span id="sliderValue">42</span>°</b></div>
+              <input id="angleSlider" type="range" min="0" max="120" value="42">
+              <div class="button-row"><button id="simulateBtn">Pause simulation</button><button class="secondary" id="neutralBtn">Set neutral</button></div>
+            </div>
+            <div class="control-group"><label for="pressureInput">Bladder pressure (PSI)</label><input id="pressureInput" type="number" min="0" max="30" step=".1" value="8.6"></div>
+            <div class="control-group"><label for="lossInput">Measured optical loss (dB)</label><input id="lossInput" type="number" min="0" max="30" step=".01" value="2.84"></div>
+            <div class="control-group full"><label>Simulator loss model</label>
+              <div class="calibration"><label>Baseline loss (dB)<input id="baseInput" type="number" step=".01" value="0.50"></label><label>Sensitivity (dB/deg)<input id="sensitivityInput" type="number" step=".001" value=".055"></label><label>Neutral angle (deg)<input id="neutralInput" type="number" step="1" value="0"></label></div>
+              <p class="hint">The simulator generates loss as <code>L = L₀ + k (θ − θ₀)</code>. When the Arduino is connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead.</p>
+            </div>
+            <div class="control-group full"><label for="connectBtn">Arduino over USB</label>
+              <div class="button-row"><button id="connectBtn">Connect to Arduino</button><span class="hint" id="serialStatus"></span></div>
+              <p class="hint">Chrome or Edge only. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight.</p>
+            </div>
+          </div>
+        </section>
+        <section class="panel chart-panel" id="trends">
+          <div class="panel-head"><h2>Live sensor trends</h2><span>Last 30 seconds · <span id="sampleRate">10 Hz</span></span></div>
+          <div class="chart-wrap"><svg id="chart" viewBox="0 0 900 242" preserveAspectRatio="none" aria-label="Live sensor trend chart"></svg></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script>
+    const $ = id => document.getElementById(id);
+    const state = { angle: 42, pressure: 8.6, loss: 2.84, running: true, connected: false, started: Date.now(), history: [] };
+    const MAX_SAMPLES = 120;
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    function lossFromAngle(angle) {
+      const base = Number($('baseInput').value) || 0;
+      const sensitivity = Number($('sensitivityInput').value) || .055;
+      const neutral = Number($('neutralInput').value) || 0;
+      return Math.max(0, base + sensitivity * (angle - neutral));
+    }
+    function setData(next, fromHardware = false) {
+      if (Number.isFinite(next.angle)) state.angle = Math.max(0, next.angle);  // drawFinger caps the drawing at 120°
+      if (Number.isFinite(next.pressure)) state.pressure = clamp(next.pressure, 0, 30);
+      if (Number.isFinite(next.loss)) state.loss = Math.max(0, next.loss);
+      else if (!fromHardware) state.loss = lossFromAngle(state.angle);  // don't invent a measured loss for hardware rows
+      $('angleSlider').value = state.angle; $('sliderValue').textContent = Math.round(state.angle);
+      $('angleReadout').textContent = Math.round(state.angle); $('metricAngle').textContent = Math.round(state.angle);
+      $('pressureReadout').textContent = state.pressure.toFixed(1); $('lossReadout').textContent = state.loss.toFixed(2);
+      if (!fromHardware) $('lossInput').value = state.loss.toFixed(2);
+      drawFinger(state.angle); addSample();
+    }
+    function point(x, y, length, degrees) {
+      const radians = degrees * Math.PI / 180;
+      return { x: x + length * Math.cos(radians), y: y - length * Math.sin(radians) };
+    }
+    function drawFinger(angle) {
+      const bend = Math.min(angle, 120);  // the drawing curls off the stage past 120°; labels still show the real angle
+      const wrist = {x: 82, y: 220}, palmEnd = point(wrist.x, wrist.y, 82, 0);
+      const p1 = point(palmEnd.x, palmEnd.y, 122, 0);
+      const p2 = point(p1.x, p1.y, 94, -bend * .35);
+      const p3 = point(p2.x, p2.y, 77, -bend * .70);
+      const tip = point(p3.x, p3.y, 62, -bend);
+      const path = `M ${wrist.x} ${wrist.y} L ${palmEnd.x} ${palmEnd.y} L ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y} L ${tip.x} ${tip.y}`;
+      ['fingerShadow','fingerBody','sleeve','sleeveGlow','fingerHighlight'].forEach(id => $(id).setAttribute('d', path));
+      $('fingerHighlight').setAttribute('d', `M ${wrist.x} ${wrist.y-10} L ${palmEnd.x} ${palmEnd.y-10} L ${p1.x} ${p1.y-10} L ${p2.x} ${p2.y-10} L ${p3.x} ${p3.y-10} L ${tip.x} ${tip.y-10}`);
+      $('joint1').setAttribute('cx', p1.x); $('joint1').setAttribute('cy', p1.y);
+      $('joint2').setAttribute('cx', p2.x); $('joint2').setAttribute('cy', p2.y);
+      $('joint3').setAttribute('cx', p3.x); $('joint3').setAttribute('cy', p3.y);
+      const arcR = 62, start = point(p1.x, p1.y, arcR, 0), end = point(p1.x, p1.y, arcR, -bend);
+      $('angleArc').setAttribute('d', `M ${start.x} ${start.y} A ${arcR} ${arcR} 0 0 1 ${end.x} ${end.y}`);
+      $('arcLabel').setAttribute('x', p1.x + 12); $('arcLabel').setAttribute('y', p1.y - 47); $('arcLabel').textContent = `${Math.round(angle)}°`;
+    }
+    function addSample() {
+      state.history.push({ angle: state.angle, loss: state.loss, pressure: state.pressure });
+      if (state.history.length > MAX_SAMPLES) state.history.shift();
+      drawChart();
+    }
+    function drawChart() {
+      const chart = $('chart'), W = 900, H = 242, pad = {l: 43, r: 12, t: 17, b: 28};
+      const plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
+      let html = '';
+      [0, .25, .5, .75, 1].forEach(t => { const y = pad.t + t*plotH; html += `<line class="gridline" x1="${pad.l}" x2="${W-pad.r}" y1="${y}" y2="${y}"/><text class="axis-label" x="5" y="${y+4}">${Math.round(120-t*120)}°</text>`; });
+      html += `<text class="axis-label" x="${pad.l}" y="${H-5}">30 sec ago</text><text class="axis-label" x="${W-60}" y="${H-5}">now</text>`;
+      const series = [{key:'angle', color:'#70a9ff', max:120}, {key:'loss', color:'#43d5bb', max:8}, {key:'pressure', color:'#ffbf69', max:24}];
+      series.forEach(s => { const points = state.history.map((v,i) => `${pad.l + (state.history.length < 2 ? 0 : i/(MAX_SAMPLES-1)*plotW)},${pad.t+plotH-clamp(v[s.key]/s.max,0,1)*plotH}`).join(' '); html += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`; });
+      html += `<g transform="translate(${W-310},8)"><line x1="0" x2="18" y1="4" y2="4" stroke="#70a9ff" stroke-width="3"/><text class="axis-label" x="24" y="8">Angle (°)</text><line x1="83" x2="101" y1="4" y2="4" stroke="#43d5bb" stroke-width="3"/><text class="axis-label" x="107" y="8">Loss (dB)</text><line x1="174" x2="192" y1="4" y2="4" stroke="#ffbf69" stroke-width="3"/><text class="axis-label" x="198" y="8">Pressure (PSI)</text></g>`;
+      chart.innerHTML = html;
+    }
+    function tick() {
+      if (state.running && !state.connected) {
+        const t = Date.now()/1000;
+        const angle = 42 + Math.sin(t * .9) * 25 + Math.sin(t * .31) * 9;
+        setData({angle, pressure: 5.2 + angle*.08 + Math.sin(t*1.7)*.4});
+      }
+      const elapsed = Math.floor((Date.now()-state.started)/1000); $('duration').textContent = `${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`;
+    }
+    function showStatus() {
+      const text = state.connected ? 'Arduino connected' : state.running ? 'Simulation active' : 'Simulation paused';
+      $('status').innerHTML = `<i class="dot ${state.connected || state.running ? '' : 'off'}"></i><span>${text}</span>`;
+    }
+    function pauseSimulation() { state.running = false; $('simulateBtn').textContent = 'Resume simulation'; showStatus(); }
+    $('angleSlider').addEventListener('input', e => { pauseSimulation(); setData({angle:Number(e.target.value), loss:Number($('lossInput').value)}); });
+    $('pressureInput').addEventListener('input', e => setData({pressure:Number(e.target.value), loss:Number($('lossInput').value)}));
+    $('lossInput').addEventListener('input', e => setData({loss:Number(e.target.value)}));
+    ['baseInput','sensitivityInput','neutralInput'].forEach(id => $(id).addEventListener('change', () => { if (!state.connected) setData({loss:lossFromAngle(state.angle)}); }));
+    $('simulateBtn').addEventListener('click', () => { state.running = !state.running; $('simulateBtn').textContent = state.running ? 'Pause simulation' : 'Resume simulation'; showStatus(); });
+    $('neutralBtn').addEventListener('click', () => { setData({angle:0}); pauseSimulation(); });
+
+    // Arduino over USB (Web Serial API, Chrome/Edge). src/main.cpp prints a
+    // whitespace-separated table; its header row names the columns.
+    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
+    let columns = DEFAULT_COLUMNS, serialReader = null;
+
+    function handleSerialLine(line) {
+      const text = line.trim(), cells = text.split(/\s+/);
+      if (cells[0] === 'Force(g)') { columns = cells; return; }
+      if (cells.length !== columns.length || !Number.isFinite(parseFloat(cells[0]))) {
+        if (text) $('serialStatus').textContent = text;  // startup messages such as "Venting for 5 seconds..."
+        return;
+      }
+      const column = name => parseFloat(cells[columns.indexOf(name)]);  // "--" parses as NaN and is skipped
+      setData({ angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)') }, true);
+      $('inputMode').textContent = 'Arduino · live';
+    }
+
+    async function connectArduino() {
+      if (!('serial' in navigator)) { $('serialStatus').textContent = 'This browser has no Web Serial. Use Chrome or Edge.'; return; }
+      let port;
+      $('connectBtn').disabled = true;
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+      } catch (err) {
+        $('serialStatus').textContent = err.name === 'NotFoundError' ? 'No port selected.' : `Could not open the port: ${err.message}`;
+        return;
+      } finally {
+        $('connectBtn').disabled = false;
+      }
+      const decoder = new TextDecoderStream();
+      const piped = port.readable.pipeTo(decoder.writable).catch(() => {});
+      serialReader = decoder.readable.getReader();
+      columns = DEFAULT_COLUMNS;
+      state.connected = true;
+      pauseSimulation();  // so a dropped cable doesn't fall back to fake motion
+      $('connectBtn').textContent = 'Disconnect';
+      $('inputMode').textContent = 'Arduino · waiting for data';
+      $('serialStatus').textContent = '';
+      let buffer = '';
+      try {
+        while (true) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          buffer += value;
+          const lines = buffer.split('\n');
+          buffer = lines.pop();  // keep any partial line for the next chunk
+          lines.forEach(handleSerialLine);
+        }
+      } catch (err) {
+        $('serialStatus').textContent = `Connection lost: ${err.message}`;
+      } finally {
+        serialReader.releaseLock();
+        serialReader = null;
+        await piped;
+        await port.close().catch(() => {});
+        state.connected = false;
+        $('connectBtn').textContent = 'Connect to Arduino';
+        $('inputMode').textContent = 'Manual simulator';
+        showStatus();
+      }
+    }
+
+    // Cancelling the reader ends the read loop above, which closes the port.
+    $('connectBtn').addEventListener('click', () => serialReader ? serialReader.cancel() : connectArduino());
+    setData({angle:42, pressure:8.6, loss:lossFromAngle(42)}); setInterval(tick, 100); 
+  </script>
+</body>
+</html>
