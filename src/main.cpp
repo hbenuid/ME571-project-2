@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <Wire.h>
 #include <math.h>
 #include <Adafruit_MPRLS.h>
@@ -37,11 +38,21 @@ const char *const MODE_LABELS[] = { "FSR", "INFL", "HOLD", "VENT", "STOP", "MAX"
 Mode mode = MODE_FSR;
 unsigned long lastCommandMs = 0;
 
-// Reference for the optical loss: the A1 reading (ADC counts) with the finger straight. It's fixed
-// rather than measured at startup, so the loss and angle mean the same in every session. The light
-// level must stay the same for that to hold: changing the LED, potentiometer or wiring shifts every
-// angle. 787 counts (3.85 V) is the straight-finger reading from the 2026-11-10 calibration.
-const double WAVEGUIDE_BASELINE = 787;
+// Reference for the optical loss: the A1 reading (ADC counts) with the finger straight. It isn't
+// measured at startup, so the loss and angle mean the same in every session. The light level must
+// stay the same for that to hold: changing the LED, potentiometer or wiring shifts every angle.
+// The dashboard's Debug view sets it with "B<counts>\n", and it's saved in EEPROM, which keeps it
+// through restarts and uploads. The default is used only until one is saved: 787 counts (3.85 V) is
+// the straight-finger reading from the 2026-11-10 calibration.
+const int DEFAULT_WAVEGUIDE_BASELINE = 787;
+const int BASELINE_EEPROM_ADDR = 0;
+const uint16_t BASELINE_EEPROM_MAGIC = 0xB5E1;  // marks a saved baseline
+struct SavedBaseline {
+  uint16_t magic;
+  uint16_t counts;
+};
+int waveguideBaseline = DEFAULT_WAVEGUIDE_BASELINE;
+long baselineEntry = -1;  // digits received so far after "B", or -1 when not reading one
 
 // Absolute pressure with the actuator vented, subtracted to give bladder (gauge) pressure
 float pressureBaseline = 0;
@@ -111,9 +122,58 @@ void setMode(Mode next) {
   }
 }
 
+// The dashboard's Debug view reads this line.
+void printWaveguideBaseline(const char *source) {
+  Serial.print("Waveguide baseline: ");
+  Serial.print(waveguideBaseline);
+  Serial.print(" counts (");
+  Serial.print(waveguideBaseline * 5.0 / 1023.0, 2);
+  Serial.print(" V), ");
+  Serial.println(source);
+}
+
+void loadWaveguideBaseline() {
+  SavedBaseline saved;
+  EEPROM.get(BASELINE_EEPROM_ADDR, saved);
+  if (saved.magic == BASELINE_EEPROM_MAGIC && saved.counts >= 1 && saved.counts <= 1023) {
+    waveguideBaseline = saved.counts;
+    printWaveguideBaseline("saved on the Arduino");
+  } else {
+    waveguideBaseline = DEFAULT_WAVEGUIDE_BASELINE;
+    printWaveguideBaseline("default in src/main.cpp");
+  }
+}
+
+void saveWaveguideBaseline(int counts) {
+  waveguideBaseline = counts;
+  SavedBaseline saved = { BASELINE_EEPROM_MAGIC, (uint16_t)counts };
+  EEPROM.put(BASELINE_EEPROM_ADDR, saved);  // writes only the bytes that changed
+  printWaveguideBaseline("saved");
+}
+
 // Act on one character from the dashboard. Anything else, such as line endings, is ignored.
+// "B" starts a baseline: its digits and a newline follow, as in "B787\n".
 void handleCommand(char command) {
+  if (baselineEntry >= 0) {
+    if (command >= '0' && command <= '9') {
+      baselineEntry = min(baselineEntry * 10 + (command - '0'), 100000L);
+      return;
+    }
+    if (command == '\n' || command == '\r') {
+      if (baselineEntry >= 1 && baselineEntry <= 1023) {
+        saveWaveguideBaseline((int)baselineEntry);
+      } else {
+        Serial.println("Baseline not changed: it must be 1 to 1023 counts.");
+      }
+      baselineEntry = -1;
+      return;
+    }
+    baselineEntry = -1;  // anything else cancels the baseline and is handled as usual
+  }
   switch (command) {
+    case 'B':
+      baselineEntry = 0;
+      return;
     case 'I':
       setMode(bladderPsi < MAX_DASHBOARD_PSI ? MODE_INFLATE : MODE_MAX);
       break;
@@ -195,15 +255,10 @@ void setup() {
   Serial.println("Venting for 5 seconds. Leave the FSR released.");
   delay(5000);
 
-  // Take the pressure baseline once the actuator has vented. The waveguide baseline is fixed.
+  // Take the pressure baseline once the actuator has vented. The waveguide baseline is saved.
   pressureBaseline = readPressurePsi();
 
-  // The dashboard's Debug view reads this line.
-  Serial.print("Waveguide baseline: ");
-  Serial.print((int)WAVEGUIDE_BASELINE);
-  Serial.print(" counts (");
-  Serial.print(WAVEGUIDE_BASELINE * 5.0 / 1023.0, 2);
-  Serial.println(" V), fixed in src/main.cpp");
+  loadWaveguideBaseline();
 
   Serial.println("Ready. Press and hold the FSR to inflate.");
 }
@@ -243,7 +298,7 @@ void loop() {
 
   // Loss is undefined when either reading is zero.
   bool lossValid = waveguideADC > 0;
-  double loss = lossValid ? 10 * log10(WAVEGUIDE_BASELINE / waveguideADC) : 0;  // Optical loss in dB
+  double loss = lossValid ? 10 * log10((double)waveguideBaseline / waveguideADC) : 0;  // Optical loss in dB
 
   double angle = ANGLE_A * sq(loss) + ANGLE_B * loss + ANGLE_C;  // Bending angle in degrees
   if (angle < 0) angle = 0;

@@ -39,25 +39,30 @@ Update it when behaviour changes.
 2. If the MPRLS isn't found, it prints `MPRLS sensor not found. Check wiring and reset.` and stops.
 3. It prints `Venting for 5 seconds. Leave the FSR released.`, waits 5 s, then records atmospheric pressure with
    the bladder vented (`pressureBaseline`).
-4. It prints the fixed waveguide baseline, `Waveguide baseline: 787 counts (3.85 V), fixed in src/main.cpp`, then
-   `Ready. Press and hold the FSR to inflate.`
+4. It loads the waveguide baseline from EEPROM and prints it, for example
+   `Waveguide baseline: 410 counts (2.00 V), saved on the Arduino`, or `…, default in src/main.cpp` when none has
+   been saved. Then it prints `Ready. Press and hold the FSR to inflate.`
 
 Opening the serial port normally resets an Uno, so every dashboard connection or serial-monitor start re-runs this
 and re-zeros the pressure. The bladder should be empty at that moment. The waveguide baseline is **not** measured at
-startup: it's the constant `WAVEGUIDE_BASELINE`, so the loss and angle mean the same in every session.
+startup, so the loss and angle mean the same in every session. It's saved in the Uno's EEPROM (address 0: a magic
+number `0xB5E1`, then the counts), which keeps it through restarts and uploads. You set it from the dashboard's Debug
+view, which sends `B<counts>`. `DEFAULT_WAVEGUIDE_BASELINE` (787) is used only while nothing valid is saved, so
+changing it in the sketch does nothing once a baseline has been saved: save the new value from the Debug view.
 
 ### Measurements
 
 - **Bladder pressure** (`Press(psi)`): MPRLS hPa ÷ 68.9476, minus `pressureBaseline`. This is gauge pressure, about 0
   when vented.
-- **Optical loss** (`Loss(dB)`): `10·log10(WAVEGUIDE_BASELINE / reading)`. `WAVEGUIDE_BASELINE` is fixed at 787
-  counts (3.85 V), the straight-finger reading during the 2026-11-10 calibration, so the loss is about 0 dB straight
-  and rises with bending. It goes negative if the light is brighter than that. `--` when the reading is 0. Because
+- **Optical loss** (`Loss(dB)`): `10·log10(waveguideBaseline / reading)`. `waveguideBaseline` is the saved
+  straight-finger reading (default 787 counts, 3.85 V, from the 2026-11-10 calibration), so the loss is about 0 dB
+  straight and rises with bending. It goes negative if the light is brighter than that. `--` when the reading is 0. Because
   the baseline is fixed, anything that changes the light level (LED, potentiometer, wiring, sleeve position) shifts
-  every loss and angle until the baseline and fit are measured again.
+  every loss and angle until a new baseline is saved with the finger straight.
 - **Angle** (`Angle(deg)`): `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C`, floored at 0. The coefficients come from the
   2026-11-10 calibration (5 points, 0 to 90°, RMS error 5.6°), converted from that session's 33-count startup
-  baseline to the fixed 787. `--` when the loss is `--`.
+  baseline to 787. They expect a straight finger to read 0 dB, so they still apply after saving a new baseline with
+  the finger straight. `--` when the loss is `--`.
 - **Waveguide voltage** (`Wave(V)`): the raw A1 reading × 5/1023.
 - **Raw waveguide reading** (`Wave(raw)`): the same A1 reading in ADC counts, 0 to 1023, for debugging the light
   sensor at full resolution.
@@ -116,7 +121,7 @@ The startup messages are plain text lines.
 
 ### Serial commands (computer → Arduino)
 
-Single ASCII characters with no line ending needed. Anything else is ignored.
+Single ASCII characters with no line ending needed, except `B`. Anything else is ignored.
 
 | Char | Action |
 |---|---|
@@ -125,6 +130,7 @@ Single ASCII characters with no line ending needed. Anything else is ignored.
 | `V` | Vent |
 | `K` | Keep-alive: refreshes the 1.5 s timeout and nothing else |
 | `X` | Vent and hand control back to the FSR |
+| `B<counts>` + newline | Save the waveguide baseline, 1 to 1023 counts, for example `B410\n`. The sketch answers `Waveguide baseline: 410 counts (2.00 V), saved`, or `Baseline not changed: it must be 1 to 1023 counts.` Any other character before the newline cancels it. It doesn't change the mode. |
 
 `I`, `H` or `V` sent in `FSR` mode puts the dashboard in control. You can type these into the PlatformIO serial
 monitor to test, but without keep-alives the sketch vents again after 1.5 s.
@@ -257,8 +263,8 @@ Fits the sketch's angle formula to measured points and prints the constants to p
 never changes the angle itself: what's shown and recorded is always the sketch's `Angle(deg)`.
 
 - **Capturing.** Connect with the bladder empty, because the sketch zeros the pressure as it starts. The loss is
-  measured against the fixed `WAVEGUIDE_BASELINE`, so keep the light level (LED, potentiometer, wiring) the same
-  from capturing to using the fit. Then bend the finger (by hand, or with Inflate and Hold), measure the angle with a protractor, type it in
+  measured against the baseline saved on the Arduino, so keep the light level (LED, potentiometer, wiring) and the
+  baseline the same from capturing to using the fit. Then bend the finger (by hand, or with Inflate and Hold), measure the angle with a protractor, type it in
   and press **Capture** (or Enter). The page averages the next 5, 10 or 25 data rows (about 1, 2 or 5 s) and saves a
   point: the measured angle, the mean `Loss(dB)` and its standard deviation ("spread"), the mean `Angle(deg)` the
   sketch printed, pressure, `Wave(V)`, time and which connection it came from. Rows with `--` loss are left out of
@@ -281,12 +287,17 @@ never changes the angle itself: what's shown and recorded is always the sketch's
 
 For checking the light sensor and the serial link. It shows only Arduino data, never the simulator.
 
-- **Light sensor on A1.** The latest `Wave(raw)` in counts, its voltage, the fixed baseline (parsed from the
+- **Light sensor on A1.** The latest `Wave(raw)` in counts, its voltage, the saved baseline (parsed from the
   sketch's `Waveguide baseline:` line) and the reading as a percentage of the baseline. A bar shows where the
   reading sits on 0 to 5 V, with the baseline marked in amber and 3 to 4 V shaded as a good straight-finger range.
   It warns when A1 reads 0 (no light, or not wired to A1) and when it's at full scale (turn the potentiometer down).
   With a straight finger the reading should be close to 100% of the baseline. With a sketch that has no `Wave(raw)`
   column, it estimates the counts from `Wave(V)` and says so.
+- **Set the baseline.** A number box (filled with the current baseline), **Use current reading**, which fills in the
+  mean `Wave(raw)` of the last 2 s, and **Save to Arduino**, which sends `B<counts>\n` and waits up to 2 s for the
+  sketch's `…, saved` line. Without that answer it says to upload the current sketch. Saving needs the first data
+  row, and the button stays off while the box is empty, out of range or equal to the saved value. Save with the
+  finger straight and the bladder vented, since the angle constants expect 0 dB there.
 - **Inflate, Hold and Vent**, the same as in the calibration view, to see how the reading follows a bend.
 - **Chart.** The raw reading over the last 20 s with the baseline dashed. Time when the pump ran (`Pump` is `ON` or
   `Mode` is `INFL`) is shaded, to show noise from the pump. **Zoom to the data** fits the scale to the readings,
@@ -301,7 +312,9 @@ These are defined in both files, so change them together:
 
 - **Header names.** The page reads `Angle(deg)`, `Loss(dB)`, `Press(psi)`, `Wave(V)`, `Wave(raw)`, `Pump` and `Mode`
   by name and lists every column in `DEFAULT_COLUMNS`.
-- **Baseline message.** The debug view reads the number after `Waveguide baseline:` in the sketch's startup line.
+- **Baseline message.** The debug view reads the number after `Waveguide baseline:` in the sketch's startup line
+  and in its answer to `B`, treats a line ending in `, saved` as confirming a save, and shows a line starting
+  `Baseline not changed` as a refusal.
 - **Angle formula.** The calibration view fits `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C` floored at 0, and its paste
   block uses those constant names and the sketch's `// Angle calibration:` comment line. If the sketch's formula
   changes, change the fit in the page too.
@@ -309,7 +322,7 @@ These are defined in both files, so change them together:
   `STOP` and `FSR` (ending the automatic cycle) in `handleSerialLine`, and on `VENT` in `showActuator`.
 - **Pressure limit.** The simulator's `SIM.MAX_PSI` copies `MAX_DASHBOARD_PSI` so the simulator behaves like the
   real bladder. It only affects the simulator.
-- **Command characters** `I`, `H`, `V`, `K`, `X`.
+- **Command characters** `I`, `H`, `V`, `K`, `X`, and `B<counts>` + newline.
 - **Baud rate** 115200.
 - **Timeout.** The page's hint text quotes `DASHBOARD_TIMEOUT_MS` (1.5 s). Keep-alives go out once per data row, so
   the timeout must stay several times longer than `PRINT_INTERVAL_MS`.
@@ -335,7 +348,8 @@ There are no automated tests in the repo. Changes so far have been checked like 
 1. `pio run` builds cleanly.
 2. **Firmware logic on a computer.** Compile `src/main.cpp` as ordinary C++ against small stand-in headers: an
    `Arduino.h` with fake pins, `millis()`, `delay()`, `analogRead()` and a `Serial` with input and output buffers; an
-   empty `Wire.h`; and an `Adafruit_MPRLS` whose `readPressure()` returns a test value. Then call `setup()` and
+   empty `Wire.h`; an `EEPROM.h` whose `EEPROM.get()` and `put()` copy to and from a byte array; and an
+   `Adafruit_MPRLS` whose `readPressure()` returns a test value. Then call `setup()` and
    `loop()` and check the pump and valve pins in each scenario: FSR mode, inflating to the limit, FSR stop, timeout
    handover, FSR re-arm, NaN pressure and `X`.
 3. **Dashboard in headless Chromium.** Replace `navigator.serial` with a fake port whose `readable` replays text in
@@ -362,8 +376,8 @@ There are no automated tests in the repo. Changes so far have been checked like 
 
 - **The angle calibration is rough and tied to one light level.** It has 5 points (RMS error 5.6°), and on
   2026-11-10, after it was made, the straight-finger reading was 311 to 376 counts against the 787 baseline, so a
-  straight finger read about 15 to 23°. After changing the light level, set `WAVEGUIDE_BASELINE` to the new
-  straight-finger `Wave(raw)` and recalibrate.
+  straight finger read about 12 to 23°. Saving a new baseline with the finger straight brings that back to about
+  0°; recalibrating with more points would make the fit itself better.
 - **`MAX_DASHBOARD_PSI` is 30 psi, above what the MPRLS can measure** (about 10 psi gauge). Dashboard inflation
   therefore has no working pressure cut-off, only the FSR stop and the timeout. A limit that works must stay below
   about 10 psi.
