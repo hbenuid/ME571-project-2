@@ -28,7 +28,8 @@ bool fsrArmed = true;    // FSR mode: false until the FSR is released after dash
 // Dashboard control. index.html sends single characters over serial:
 //   I = inflate, H = hold, V = vent, K = keep-alive, X = hand control back to the FSR.
 // While the dashboard is in control, pressing the FSR vents the bladder (stop button).
-const float MAX_DASHBOARD_PSI = 3.0f;             // Placeholder limit. Set it from the bladder's rating.
+const float MAX_DASHBOARD_PSI = 30.0f;            // Above the ~10 psi gauge the MPRLS can read, so a valid
+                                                  // reading never reaches it. Only a failed (NaN) reading stops it.
 const unsigned long DASHBOARD_TIMEOUT_MS = 1500;  // Vent and hand back to the FSR if the dashboard goes quiet
 
 enum Mode { MODE_FSR, MODE_INFLATE, MODE_HOLD, MODE_VENT, MODE_STOP, MODE_MAX };
