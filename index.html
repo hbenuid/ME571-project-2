@@ -180,16 +180,37 @@
     button.icon { padding: 2px 8px; color: var(--muted); background: transparent; border-color: transparent; font-weight: 400; }
     button.icon:hover:not(:disabled) { color: var(--danger); background: transparent; border-color: transparent; }
     pre.snippet { margin: 0; padding: 12px 14px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); background: var(--stage); border: 1px solid var(--edge); border-radius: 6px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    /* Debug view */
+    .debug-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 16px; align-items: start; }
+    .debug-metrics { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--edge); }
+    .debug-metrics .metric + .metric { border-left: 1px solid var(--edge); }
+    .meter { position: relative; height: 16px; margin-top: 10px; border: 1px solid var(--edge); border-radius: 4px; background: var(--stage); }
+    .meter i { position: absolute; top: 0; bottom: 0; }
+    .meter-band { left: 60%; width: 20%; background: #e7e6e0; }
+    .meter-fill { left: 0; width: 0; background: var(--ink); border-radius: 3px 0 0 3px; }
+    .meter .meter-mark { top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: var(--warn); }
+    .meter-scale { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    #dbgWarnings { border-bottom: 1px solid var(--edge); }
+    #dbgWarnings:empty { display: none; }
+    .debug-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 18px 0; color: var(--muted); font-size: 12px; }
+    .debug-legend span { display: inline-flex; gap: 7px; align-items: center; }
+    .key-raw { width: 20px; height: 3px; border-radius: 2px; background: var(--ink); }
+    .key-base { width: 20px; border-top: 2px dashed var(--warn); }
+    .key-pump { width: 14px; height: 12px; border-radius: 2px; background: #fbe4d8; }
+    #debugChart { width: 100%; height: 240px; display: block; }
+    .debug-layout .panel-head label.check { padding-bottom: 0; color: var(--muted); font-size: 12px; }
+    pre.serial-log { height: 560px; overflow: auto; white-space: pre; overflow-wrap: normal; font-size: 11.5px; line-height: 1.5; }
+    @media (max-width: 1100px) { .debug-layout { grid-template-columns: minmax(0, 1fr); } pre.serial-log { height: 360px; } }
     @media (max-width: 1100px) { .cal-layout { grid-template-columns: minmax(0, 1fr); } .cal-col { display: contents; } .cal-fit { order: 1; } .cal-points { order: 2; } .cal-code { order: 3; } }
     @media (max-width: 900px) { .topbar-inner { padding: 10px 16px; } main { padding: 16px 16px 32px; } .layout { grid-template-columns: minmax(0, 1fr); } .session-bar { width: 100%; margin-left: 0; } .serial-status { text-align: left; } }
-    @media (max-width: 520px) { .session-bar input[type=text] { flex: 1 1 140px; width: auto; min-width: 0; } .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .mode-tab { padding: 6px 8px; } .calibration { grid-template-columns: 1fr; } .finger-stage { min-height: 340px; } .angle-badge strong { font-size: 32px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats { grid-template-columns: 1fr 1fr; } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .session-bar input[type=text] { flex: 1 1 140px; width: auto; min-width: 0; } .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .mode-tab { padding: 6px 8px; } .calibration { grid-template-columns: 1fr; } .finger-stage { min-height: 340px; } .angle-badge strong { font-size: 32px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats, .debug-metrics { grid-template-columns: 1fr 1fr; } .debug-metrics .metric:nth-child(3) { border-left: 0; } .debug-metrics .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <header class="topbar" id="overview">
     <div class="topbar-inner">
       <div class="brand"><div class="brand-mark">FS</div><strong>FlexSense</strong></div>
-      <nav class="view-tabs" aria-label="Views"><a href="#overview">Live session</a><a href="#calibration">Calibration</a></nav>
+      <nav class="view-tabs" aria-label="Views"><a href="#overview">Live session</a><a href="#calibration">Calibration</a><a href="#debug">Debug</a></nav>
       <div class="session-bar">
         <div class="status" id="status"><i class="dot" id="statusDot"></i><span id="statusText">Simulator</span></div>
         <button id="connectBtn" type="button">Connect to Arduino</button>
@@ -341,6 +362,48 @@
           </div>
         </section>
       </div>
+    </section>
+    <section class="debug-layout" id="debug" hidden>
+      <div class="cal-col">
+        <section class="panel">
+          <div class="panel-head"><h2>Light sensor on A1 <button class="info-btn" type="button" aria-label="About the light sensor">i</button><span class="info-text" hidden>
+            <span class="p">The waveguide's photodiode, read with <code>analogRead(A1)</code>: 0 to 1023 counts for 0 to 5 V. More light gives a higher reading, so bending the finger lowers it.</span>
+            <span class="p"><b>Baseline</b> is the reading the sketch took as it started, with the bladder vented. The optical loss compares every reading with it, so reconnect after changing the wiring or the potentiometer.</span>
+            <span class="p"><b>0 counts</b>: no light reaches the photodiode, or it isn't wired to A1. Check that the LED is lit, the potentiometer isn't turned all the way down (0 Ω gives 0 V) and the photodiode's signal wire goes to A1.</span>
+            <span class="p"><b>1023 counts</b>: the reading is at 5 V and can't show small changes. Turn the potentiometer down.</span>
+            <span class="p">The shaded part of the bar, 3 to 4 V, is a good place for the straight-finger reading: fine steps, with room left below 5 V.</span>
+          </span></h2><span id="debugStatus">Arduino not connected</span></div>
+          <div class="debug-metrics">
+            <div class="metric"><div class="metric-label">Raw reading</div><div class="metric-value"><span id="dbgRaw">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Voltage</div><div class="metric-value"><span id="dbgVolts">--</span> <small>V</small></div></div>
+            <div class="metric"><div class="metric-label">Startup baseline</div><div class="metric-value"><span id="dbgBase">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Light vs. baseline</div><div class="metric-value"><span id="dbgRatio">--</span> <small>%</small></div></div>
+          </div>
+          <div class="control-group"><span class="group-label">Where the reading sits, 0 to 5 V</span>
+            <div class="meter" role="img" id="dbgMeter" aria-label="Raw reading on a 0 to 5 V scale"><i class="meter-band"></i><i class="meter-fill" id="dbgFill"></i><i class="meter-mark" id="dbgMark" hidden></i></div>
+            <div class="meter-scale"><span>0 V</span><span>1 V</span><span>2 V</span><span>3 V</span><span>4 V</span><span>5 V</span></div>
+          </div>
+          <ul class="warnings" id="dbgWarnings"></ul>
+          <div class="control-group"><span class="group-label">Bladder <button class="info-btn" type="button" aria-label="About these buttons">i</button><span class="info-text" hidden>Bend the finger to see how the reading responds. These work like the calibration view's buttons, and the sketch's pressure limit and FSR stop still apply.</span></span>
+            <div class="button-row"><button class="secondary" data-command="I" type="button" disabled>Inflate</button><button class="secondary" data-command="H" type="button" disabled>Hold</button><button class="secondary" data-command="V" type="button" disabled>Vent</button></div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Raw reading, last 20 s</h2><label class="check"><input type="checkbox" id="dbgZoom"> Zoom to the data</label></div>
+          <div class="debug-legend"><span><i class="key-raw"></i> Raw reading</span><span><i class="key-base"></i> Startup baseline</span><span><i class="key-pump"></i> Pump running</span></div>
+          <div class="chart-wrap"><svg id="debugChart" role="img" aria-label="Raw light sensor reading over the last 20 seconds"></svg></div>
+          <div class="stats">
+            <div class="metric"><div class="metric-label">Min</div><div class="metric-value"><span id="dbgMin">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Max</div><div class="metric-value"><span id="dbgMax">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Mean</div><div class="metric-value"><span id="dbgMean">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Spread (SD) <button class="info-btn" type="button" aria-label="About the statistics">i</button><span class="info-text" hidden>All four are over the readings on the chart. With the finger still and the pump off, the spread (standard deviation) is the sensor's noise. One count is about 4.9 mV.</span></div><div class="metric-value"><span id="dbgSd">--</span> <small>counts</small></div></div>
+          </div>
+        </section>
+      </div>
+      <section class="panel">
+        <div class="panel-head"><h2>Serial output <button class="info-btn" type="button" aria-label="About the serial output">i</button><span class="info-text" hidden>Every line the Arduino sends, exactly as received: the startup messages, the header and the data rows. <code>Wave(raw)</code> is the last column. Shows the last 200 lines.</span></h2><button class="secondary" id="logPauseBtn" type="button">Pause</button></div>
+        <div class="panel-body"><pre class="snippet serial-log" id="serialLog"></pre></div>
+      </section>
     </section>
   </main>
   <div class="info-pop" id="infoPop" hidden></div>
@@ -629,7 +692,7 @@
 
     const isTyping = target => target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]');
     window.addEventListener('keydown', event => {
-      if (isTyping(event.target) || event.ctrlKey || event.metaKey || event.altKey || !$('calibration').hidden) return;
+      if (isTyping(event.target) || event.ctrlKey || event.metaKey || event.altKey || $('liveView').hidden) return;
       if (exercise === 'game' && event.key === ' ') {
         event.preventDefault();
         if (!event.repeat) startGame();
@@ -791,7 +854,7 @@
 
     // Arduino over USB (Web Serial API: Chrome, Edge, Firefox 151+). src/main.cpp prints a
     // whitespace-separated table; its header row names the columns.
-    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)'];
+    const DEFAULT_COLUMNS = ['Force(g)', 'Pump', 'Mode', 'Press(psi)', 'Loss(dB)', 'Angle(deg)', 'Wave(V)', 'Wave(raw)'];
     let columns = DEFAULT_COLUMNS, serialReader = null;
     let userDisconnect = false;  // set when Disconnect is clicked, so any other end of the connection reads as lost
 
@@ -862,14 +925,17 @@
     });
 
     function handleSerialLine(line) {
+      logSerialLine(line);
       const text = line.trim(), cells = text.split(/\s+/);
       if (cells[0] === 'Force(g)') { columns = cells; return; }
       if (cells.length !== columns.length || !Number.isFinite(parseFloat(cells[0]))) {
+        const baseline = text.match(/^Waveguide baseline:\s*(\d+)/);
+        if (baseline) debug.baseline = Number(baseline[1]);
         if (text) showSerialStatus(text);  // startup messages such as "Venting for 5 seconds..."
         return;
       }
       const column = name => parseFloat(cells[columns.indexOf(name)]);  // "--" parses as NaN and is skipped
-      const row = { angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)'), wave: column('Wave(V)'), mode: cells[columns.indexOf('Mode')] };
+      const row = { angle: column('Angle(deg)'), loss: column('Loss(dB)'), pressure: column('Press(psi)'), wave: column('Wave(V)'), raw: column('Wave(raw)'), pump: cells[columns.indexOf('Pump')], mode: cells[columns.indexOf('Mode')] };
       const mode = row.mode, now = performance.now();
       state.ready = true;  // the sketch has finished its startup vent
       state.arduinoMode = mode;
@@ -884,6 +950,7 @@
       showArduinoMode(mode);
       enableControls(true);  // only once the sketch has finished its startup vent
       calibrationRow(row);
+      debugRow(row);
       showActuator(); refreshControls();
       sendCommand('K');  // answering each row keeps the sketch from timing out
     }
@@ -917,6 +984,7 @@
       $('connectBtn').textContent = 'Disconnect';
       showSerialStatus('');
       startCalibrationInput();
+      startDebug();
       userDisconnect = false;
       let buffer = '';
       try {
@@ -951,6 +1019,8 @@
         await piped;
         await port.close().catch(() => {});
         state.connected = false;
+        debug.raw = NaN;
+        showDebug();
         Object.assign(sim, { mode: 'VENT', pressure: state.pressure, angle: state.angle, lastMs: performance.now() });  // relax from the last real reading
         showRecording(); showStatus(); showActuator(); refreshControls();
         $('connectBtn').textContent = 'Connect to Arduino';
@@ -1290,29 +1360,135 @@
       showPointTip();
     });
 
-    // Views: #calibration shows the calibration view, anything else the live session.
+    // Debug view: the light sensor's raw reading (the sketch's Wave(raw) column, A1 in
+    // ADC counts) and every serial line as received. Arduino data only.
+    const COUNTS_TO_V = 5 / 1023, SERIAL_LOG_LINES = 200;
+    const debug = { baseline: NaN, raw: NaN, exact: true, history: [], log: [], paused: false };
+
+    function logSerialLine(line) {
+      debug.log.push(line.replace(/\s+$/, ''));
+      if (debug.log.length > SERIAL_LOG_LINES) debug.log.splice(0, debug.log.length - SERIAL_LOG_LINES);
+      if (!$('debug').hidden) showSerialLog();
+    }
+    function showSerialLog() {
+      if (debug.paused) return;
+      const log = $('serialLog'), atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
+      log.textContent = debug.log.length ? debug.log.join('\n') : 'Connect to the Arduino to see what it sends.';
+      if (atBottom) log.scrollTop = log.scrollHeight;  // follow new lines unless you've scrolled up
+    }
+    $('logPauseBtn').addEventListener('click', () => {
+      debug.paused = !debug.paused;
+      $('logPauseBtn').textContent = debug.paused ? 'Resume' : 'Pause';
+      showSerialLog();
+    });
+    function startDebug() {  // on connect: the sketch restarts and takes a new baseline
+      Object.assign(debug, { baseline: NaN, raw: NaN, exact: true, history: [], log: [] });
+      showDebug();
+      showSerialLog();
+    }
+    function debugRow(row) {  // every data row from the Arduino
+      // Before Wave(raw) existed, estimate the counts from Wave(V), which has 2 decimals (about ±1 count).
+      debug.exact = Number.isFinite(row.raw);
+      debug.raw = debug.exact ? row.raw : Number.isFinite(row.wave) ? Math.round(row.wave / COUNTS_TO_V) : NaN;
+      const now = performance.now();
+      debug.history.push({ t: now, raw: debug.raw, pumping: row.pump === 'ON' || row.mode === 'INFL' });
+      while (now - debug.history[0].t > (CHART_WINDOW_S + 1) * 1000) debug.history.shift();
+      if (!$('debug').hidden) showDebug(now);
+    }
+    function showDebug(now = performance.now()) {
+      const raw = debug.raw, base = debug.baseline, live = state.connected && Number.isFinite(raw);
+      setText('debugStatus', !state.connected ? 'Arduino not connected' : !state.ready ? 'Starting up' : 'Live · 5 readings a second');
+      setText('dbgRaw', live ? `${debug.exact ? '' : '≈'}${raw}` : '--');
+      setText('dbgVolts', live ? (raw * COUNTS_TO_V).toFixed(3) : '--');
+      setText('dbgBase', Number.isFinite(base) ? base : '--');
+      setText('dbgRatio', live && base > 0 ? (raw / base * 100).toFixed(1) : '--');
+      $('dbgFill').style.width = `${live ? clamp(raw / 1023, 0, 1) * 100 : 0}%`;
+      $('dbgMark').hidden = !Number.isFinite(base);
+      if (Number.isFinite(base)) $('dbgMark').style.left = `${clamp(base / 1023, 0, 1) * 100}%`;
+      const notes = [];
+      if (!state.connected) notes.push(['info', 'Connect to the Arduino to see the light sensor. The simulator has no raw reading.']);
+      else if (live) {
+        if (raw === 0) notes.push(['warn', 'A1 reads 0: no light reaches the photodiode, or it isn\'t wired to A1.']);
+        else if (raw >= 1020) notes.push(['warn', 'A1 is at 5 V, so small changes are lost. Turn the potentiometer down.']);
+        if (base === 0) notes.push(['warn', 'The startup baseline is 0, so the sketch can\'t work out the loss. Fix the signal, then reconnect.']);
+        if (!debug.exact) notes.push(['info', 'Estimated from Wave(V), to about ±1 count. Upload the current sketch for exact counts.']);
+      }
+      $('dbgWarnings').innerHTML = notes.map(([kind, text]) => `<li class="${kind === 'info' ? 'info' : ''}">${text}</li>`).join('');
+      const values = debug.history.map(s => s.raw).filter(Number.isFinite);
+      const mean = values.length ? values.reduce((a, b) => a + b, 0) / values.length : NaN;
+      const sd = values.length > 1 ? Math.sqrt(values.reduce((a, v) => a + (v - mean) ** 2, 0) / (values.length - 1)) : NaN;
+      setText('dbgMin', values.length ? Math.min(...values) : '--');
+      setText('dbgMax', values.length ? Math.max(...values) : '--');
+      setText('dbgMean', fixed(mean, 1));
+      setText('dbgSd', fixed(sd, 2));
+      drawDebugChart(now, values);
+    }
+    function drawDebugChart(now, values) {
+      const chart = $('debugChart'), W = Math.round(chart.clientWidth), H = Math.round(chart.clientHeight);
+      if (!W || !H) return;  // the debug view is hidden
+      const pad = {l: 44, r: 8, t: 8, b: 24}, plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
+      const x = t => pad.l + (1 - (now - t) / (CHART_WINDOW_S * 1000)) * plotW;
+      let lo = 0, hi = 1023;
+      if ($('dbgZoom').checked && values.length) {  // fit the window's readings, at least 10 counts tall
+        const min = Math.min(...values), max = Math.max(...values), span = Math.max(10, (max - min) * 1.3), mid = (min + max) / 2;
+        lo = Math.max(0, Math.floor(mid - span / 2)); hi = Math.min(1023, Math.ceil(lo + span)); lo = Math.max(0, Math.min(lo, hi - 10));
+      }
+      const y = v => pad.t + (1 - (v - lo) / (hi - lo)) * plotH;
+      let html = `<defs><clipPath id="debugClip"><rect x="${pad.l}" y="0" width="${plotW}" height="${H}"/></clipPath></defs>`;
+      [0, .25, .5, .75, 1].forEach(f => { const v = hi - f * (hi - lo), yy = pad.t + f * plotH; html += `<line class="gridline" x1="${pad.l}" x2="${W-pad.r}" y1="${yy}" y2="${yy}"/><text class="axis-label" x="${pad.l-8}" y="${yy+4}" text-anchor="end">${Math.round(v)}</text>`; });
+      html += `<text class="axis-label" x="${pad.l}" y="${H-5}">${CHART_WINDOW_S} s ago</text><text class="axis-label" x="${W-pad.r}" y="${H-5}" text-anchor="end">now</text><g clip-path="url(#debugClip)">`;
+      let pumpStart = null;  // shade each stretch of time the pump was running as one block
+      debug.history.forEach((s, i) => {
+        if (s.pumping && pumpStart === null) pumpStart = s.t;
+        const next = debug.history[i + 1];
+        if (pumpStart !== null && (!next || !next.pumping)) {
+          const x0 = x(pumpStart), x1 = x(next ? next.t : now);
+          html += `<rect x="${x0.toFixed(1)}" y="${pad.t}" width="${Math.max(1, x1 - x0).toFixed(1)}" height="${plotH}" fill="#fbe4d8"/>`;
+          pumpStart = null;
+        }
+      });
+      if (Number.isFinite(debug.baseline) && debug.baseline >= lo && debug.baseline <= hi) {
+        const yb = y(debug.baseline).toFixed(1);
+        html += `<line x1="${pad.l}" x2="${W-pad.r}" y1="${yb}" y2="${yb}" stroke="#b45309" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+      }
+      const points = debug.history.filter(s => Number.isFinite(s.raw)).map(s => `${x(s.t).toFixed(1)},${y(clamp(s.raw, lo, hi)).toFixed(1)}`).join(' ');
+      html += `<polyline points="${points}" fill="none" stroke="#1b1b1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+      chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      chart.innerHTML = html + '</g>';
+    }
+    $('dbgZoom').addEventListener('change', () => showDebug());
+
+    // Views: #calibration and #debug show those views, anything else the live session.
+    const VIEWS = { '#calibration': 'calibration', '#debug': 'debug' };
     function showView() {
-      const calibrating = location.hash === '#calibration';
+      const view = VIEWS[location.hash] || 'live';
       hideInfo();
-      $('liveView').hidden = $('modeBar').hidden = calibrating;
-      $('calibration').hidden = !calibrating;
-      // Capturing needs a still finger, so the exercise modes stop while the calibration view is open.
-      if (calibrating) {
-        stopAuto('Stopped: you opened Calibration');
+      $('liveView').hidden = $('modeBar').hidden = view !== 'live';
+      $('calibration').hidden = view !== 'calibration';
+      $('debug').hidden = view !== 'debug';
+      // Both other views have their own Inflate, Hold and Vent, and capturing needs a still finger,
+      // so the exercise modes stop while either is open.
+      if (view !== 'live') {
+        stopAuto(`Stopped: you opened ${view === 'debug' ? 'Debug' : 'Calibration'}`);
         releaseAllKeys();
         if (game.status === 'playing') resetGame();
       }
-      runGameLoop(!calibrating && exercise === 'game');
+      runGameLoop(view === 'live' && exercise === 'game');
+      const href = view === 'live' ? '#overview' : `#${view}`;
       all('.view-tabs a').forEach(a => {
-        const current = a.getAttribute('href') === (calibrating ? '#calibration' : '#overview');
+        const current = a.getAttribute('href') === href;
         a.classList.toggle('active', current);
         if (current) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
       });
       window.scrollTo(0, 0);
-      if (calibrating) drawFitChart(); else drawChart();
+      redrawView();
+      if (view === 'debug') showSerialLog();
+    }
+    function redrawView() {
+      if (!$('calibration').hidden) drawFitChart(); else if (!$('debug').hidden) showDebug(); else drawChart();
     }
     window.addEventListener('hashchange', showView);
-    window.addEventListener('resize', () => { if (!$('calibration').hidden) drawFitChart(); else drawChart(); });
+    window.addEventListener('resize', redrawView);
 
     // Info buttons: each (i) shows the hidden .info-text after it in the shared popup.
     // Hovering shows it, and a click or tap keeps it open until you click elsewhere or press Escape.
