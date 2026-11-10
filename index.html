@@ -46,6 +46,10 @@
     .panel-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; }
     .panel-head > span { color: var(--muted); font-size: 12px; }
     .actuator b { margin-left: 4px; color: var(--ink); font-size: 13px; font-weight: 600; }
+    .actuator b.warn, #calInput.warn { color: var(--warn); font-weight: 600; }
+    .limit-flag { margin-left: auto; padding: 1px 8px; border: 1px solid var(--warn); border-radius: 999px; color: var(--warn); font-size: 11px; font-weight: 600; }
+    .metric.at-limit { background: #fdf6ec; }
+    .metric.at-limit .metric-value { color: var(--warn); }
     .stage-panel { display: flex; flex-direction: column; }
     .finger-stage { flex: 1; min-height: 420px; position: relative; overflow: hidden; background: var(--stage); }
     #finger { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -231,7 +235,7 @@
         </div>
         <div class="metrics">
           <div class="metric loss"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">0.00</span> <small>dB</small></div></div>
-          <div class="metric pressure"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">0.0</span> <small>PSI</small></div></div>
+          <div class="metric pressure" id="pressureMetric"><div class="metric-label">Bladder pressure<span class="limit-flag" id="limitFlag" title="The sketch stopped inflating: the pressure reached MAX_DASHBOARD_PSI in src/main.cpp, or a pressure reading failed. Hold or Vent clears it." hidden>Limit reached</span></div><div class="metric-value"><span id="pressureReadout">0.0</span> <small>PSI</small></div></div>
         </div>
       </section>
       <div class="side">
@@ -405,7 +409,7 @@
       let html = `<defs><clipPath id="chartClip"><rect x="${pad.l}" y="0" width="${plotW}" height="${H}"/></clipPath></defs>`;
       [0, .25, .5, .75, 1].forEach(t => { const y = pad.t + t*plotH; html += `<line class="gridline" x1="${pad.l}" x2="${W-pad.r}" y1="${y}" y2="${y}"/><text class="axis-label" x="${pad.l-8}" y="${y+4}" text-anchor="end">${Math.round(120-t*120)}°</text>`; });
       html += `<text class="axis-label" x="${pad.l}" y="${H-5}">${CHART_WINDOW_S} s ago</text><text class="axis-label" x="${W-pad.r}" y="${H-5}" text-anchor="end">now</text><g clip-path="url(#chartClip)">`;
-      const series = [{key:'angle', color:'#2a78d6', max:120}, {key:'loss', color:'#1baf7a', max:8}, {key:'pressure', color:'#eb6834', max:24}];
+      const series = [{key:'angle', color:'#2a78d6', max:120}, {key:'loss', color:'#1baf7a', max:8}, {key:'pressure', color:'#eb6834', max:30}];
       series.forEach(s => { const points = state.history.map(v => `${x(v.t).toFixed(1)},${(pad.t+plotH-clamp(v[s.key]/s.max,0,1)*plotH).toFixed(1)}`).join(' '); html += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`; });
       chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
       chart.innerHTML = html + '</g>';
@@ -427,7 +431,7 @@
     // K keep-alive (it vents if none arrive for 1.5 s), X hand control back to the FSR.
     // drive() sends I, H or V to the Arduino when one is connected, or to the simulator.
     const encoder = new TextEncoder();
-    const MODE_TEXT = { FSR: 'FSR in control', INFL: 'Inflating', HOLD: 'Holding', VENT: 'Venting', STOP: 'Stopped by the FSR, vented', MAX: 'At the pressure limit, holding' };
+    const MODE_TEXT = { FSR: 'FSR in control', INFL: 'Inflating', HOLD: 'Holding', VENT: 'Venting', STOP: 'Stopped by the FSR, vented', MAX: 'Pressure limit reached, holding' };
     const COMMAND_SETTLE_MS = 400;  // rows received sooner than this after a command may predate it
     let serialWriter = null, lastDriveMs = -Infinity;
 
@@ -456,11 +460,16 @@
       const text = !mode ? 'Starting up' : mode === 'VENT' && state.pressure < .05 ? 'Vented' : MODE_TEXT[mode] || mode;
       setText('actuatorText', text);
       setText('calInput', state.connected ? `Actuator · ${text}` : 'Arduino not connected');  // calibration needs the real one
+      const atLimit = mode === 'MAX';  // the sketch (or simulator) stopped inflating at the pressure limit
+      $('limitFlag').hidden = !atLimit;
+      $('pressureMetric').classList.toggle('at-limit', atLimit);
+      $('actuatorText').classList.toggle('warn', atLimit);
+      $('calInput').classList.toggle('warn', atLimit && state.connected);
     }
 
     // Simulator: a bladder that answers I, H and V like the sketch does. In the
     // game the bladder is vented and the arrow keys stand in for the patient's own effort.
-    const SIM = { MAX_PSI: 3, FILL_PSI_PER_S: .8, VENT_TIME_S: .5, DEG_PER_PSI: 30, LAG_S: .25, EFFORT_DEG_PER_S: 80 };  // MAX_PSI mirrors MAX_DASHBOARD_PSI
+    const SIM = { MAX_PSI: 30, FILL_PSI_PER_S: .8, VENT_TIME_S: .5, DEG_PER_PSI: 30, LAG_S: .25, EFFORT_DEG_PER_S: 80 };  // MAX_PSI mirrors MAX_DASHBOARD_PSI
     const sim = { mode: 'VENT', pressure: 0, angle: 0, lastMs: performance.now() };
     function simCommand(command) {
       sim.mode = command === 'I' ? (sim.pressure < SIM.MAX_PSI ? 'INFL' : 'MAX') : command === 'H' ? 'HOLD' : 'VENT';
@@ -478,7 +487,7 @@
         const direction = topKey() === 'up' ? 1 : topKey() === 'down' ? -1 : 0;
         sim.angle = clamp(sim.angle + direction * SIM.EFFORT_DEG_PER_S * dt, 0, 120);
       } else {
-        sim.angle += (sim.pressure * SIM.DEG_PER_PSI - sim.angle) * (1 - Math.exp(-dt / SIM.LAG_S));
+        sim.angle += (Math.min(120, sim.pressure * SIM.DEG_PER_PSI) - sim.angle) * (1 - Math.exp(-dt / SIM.LAG_S));
       }
       setData({ angle: sim.angle, pressure: sim.pressure });
       showActuator();

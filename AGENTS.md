@@ -70,7 +70,9 @@ It always closes the exhaust before starting the pump and stops the pump before 
 
 Safety rules, all enforced in the sketch rather than the dashboard:
 
-- Dashboard inflation stops at `MAX_DASHBOARD_PSI`, a **3 psi placeholder** to be set from the bladder's rating.
+- Dashboard inflation stops at `MAX_DASHBOARD_PSI`, set to **30 psi**. That is above the roughly 10 psi (gauge) the
+  MPRLS can read, so a valid reading never reaches it: in practice only a failed (NaN) reading stops dashboard
+  inflation, and holding Bend or Inflate keeps the pump running.
   While inflating, pressure is checked on every loop pass, not only at print time. A failed (NaN) pressure reading
   counts as over the limit, and `I` at or above the limit goes straight to `MAX`.
 - In any dashboard mode, an FSR press (> `PRESS_FORCE`) switches to `STOP`, which lasts until the next dashboard
@@ -170,6 +172,9 @@ vents the bladder. It doesn't vent if the sketch is still in `FSR` mode and the 
 
 - The automatic cycle runs on the clock. With an Arduino it also advances on every data row, so a background tab
   doesn't stretch its phases. Inflation still stops at the sketch's `MAX_DASHBOARD_PSI`.
+- **Limit indicator.** While the `Mode` column (or the simulator) is `MAX`, the Bladder pressure readout turns
+  amber with a **Limit reached** tag, and the Controls heading and the calibration view's actuator line read
+  "Pressure limit reached, holding" in amber. It clears on the next row that isn't `MAX` (after Hold or Vent).
 - If a data row shows `STOP` (FSR pressed) or `FSR` (the sketch timed out), the page ends the automatic cycle and
   forgets held keys, without sending anything. A held key needs a fresh press after that. Rows that arrive within
   400 ms of a command (`COMMAND_SETTLE_MS`) are ignored for this check, because they may have been printed before
@@ -181,8 +186,8 @@ vents the bladder. It doesn't vent if the sketch is still in `FSR` mode and the 
 ### Without an Arduino: the simulator
 
 The page starts on the simulator ("Simulator" in the status pill). A simulated bladder answers `I`, `H` and `V`
-like the sketch does. It fills at 0.8 psi/s up to 3 psi (mirroring `MAX_DASHBOARD_PSI`), vents with a 0.5 s time
-constant and bends the finger 30° per psi. So the Automatic and Manual modes can be tried without hardware. In the
+like the sketch does. It fills at 0.8 psi/s up to 30 psi (mirroring `MAX_DASHBOARD_PSI`), vents with a 0.5 s time
+constant and bends the finger 30° per psi, up to 120°. So the Automatic and Manual modes can be tried without hardware. In the
 Game, the bladder stays vented and **↑**/**↓** move the simulated finger directly, standing in for the patient's
 own effort. Loss comes from the fields under **Simulator settings**, `L = L₀ + k(θ − θ₀)`. That section starts
 closed and is hidden while an Arduino is connected. None of this is real data, and it is never recorded.
@@ -328,14 +333,16 @@ There are no automated tests in the repo. Changes so far have been checked like 
 
 - **The angle calibration is a placeholder.** Measure angle against loss on the sleeve with the dashboard's
   Calibration view and paste the fitted `ANGLE_A`, `ANGLE_B` and `ANGLE_C` into the sketch.
-- **`MAX_DASHBOARD_PSI` is a 3 psi placeholder.** It must stay below about 10 psi, where the MPRLS saturates.
+- **`MAX_DASHBOARD_PSI` is 30 psi, above what the MPRLS can measure** (about 10 psi gauge). Dashboard inflation
+  therefore has no working pressure cut-off, only the FSR stop and the timeout. A limit that works must stay below
+  about 10 psi.
 - FSR-mode inflation has no pressure limit.
 - Hold only stays steady if the pump doesn't leak air back.
 - `arduino-libraries/Stepper` is in `lib_deps` but isn't used.
 - **The game is a placeholder.** It has no levels, sounds or difficulty setting, and its "Top of screen at" angle
   is only as accurate as the angle calibration. The automatic cycle is timed, not closed-loop on angle or pressure.
 - Unfixed display issues in `index.html`:
-  - The trend chart plots loss (0–8 dB) and pressure (0–24 psi) on the angle's 0–120° scale with no axes of their
+  - The trend chart plots loss (0–8 dB) and pressure (0–30 psi) on the angle's 0–120° scale with no axes of their
     own. It shows the last 20 s (`CHART_WINDOW_S`), placing each sample by when it arrived.
   - In the finger drawing, the grey sleeve completely covers the skin-coloured finger, and the angle arc at the first
     knuckle shows the full angle although that joint bends only 35% of it.
