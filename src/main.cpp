@@ -37,18 +37,21 @@ const char *const MODE_LABELS[] = { "FSR", "INFL", "HOLD", "VENT", "STOP", "MAX"
 Mode mode = MODE_FSR;
 unsigned long lastCommandMs = 0;
 
-// Waveguide reading at rest, used as the reference for optical loss
-double waveguideBaseline = 0;
+// Reference for the optical loss: the A1 reading (ADC counts) with the finger straight. It's fixed
+// rather than measured at startup, so the loss and angle mean the same in every session. The light
+// level must stay the same for that to hold: changing the LED, potentiometer or wiring shifts every
+// angle. 787 counts (3.85 V) is the straight-finger reading from the 2026-11-10 calibration.
+const double WAVEGUIDE_BASELINE = 787;
 
 // Absolute pressure with the actuator vented, subtracted to give bladder (gauge) pressure
 float pressureBaseline = 0;
 float bladderPsi = 0;  // Latest bladder (gauge) pressure
 
 // Angle calibration: angle (deg) = ANGLE_A * loss^2 + ANGLE_B * loss + ANGLE_C, loss in dB.
-// Placeholder fit. Replace with coefficients measured on this sleeve.
-const double ANGLE_A = 3.1412;
-const double ANGLE_B = 84.948;
-const double ANGLE_C = 1.1066;
+// Fitted 2026-11-10 from 5 points, 0.00 to 7.81 dB and 0 to 90 deg. RMS error 5.6 deg.
+const double ANGLE_A = 1.32727;
+const double ANGLE_B = 0.14652;
+const double ANGLE_C = 0.89028;
 
 // Serial output
 const unsigned long PRINT_INTERVAL_MS = 200;  // 5 rows per second
@@ -192,16 +195,15 @@ void setup() {
   Serial.println("Venting for 5 seconds. Leave the FSR released.");
   delay(5000);
 
-  // Take the baselines once the actuator has vented.
-  waveguideBaseline = analogRead(WAVEGUIDE_PIN);
+  // Take the pressure baseline once the actuator has vented. The waveguide baseline is fixed.
   pressureBaseline = readPressurePsi();
 
   // The dashboard's Debug view reads this line.
   Serial.print("Waveguide baseline: ");
-  Serial.print((int)waveguideBaseline);
+  Serial.print((int)WAVEGUIDE_BASELINE);
   Serial.print(" counts (");
-  Serial.print(waveguideBaseline * 5.0 / 1023.0, 2);
-  Serial.println(" V)");
+  Serial.print(WAVEGUIDE_BASELINE * 5.0 / 1023.0, 2);
+  Serial.println(" V), fixed in src/main.cpp");
 
   Serial.println("Ready. Press and hold the FSR to inflate.");
 }
@@ -240,8 +242,8 @@ void loop() {
   float waveguideVoltage = waveguideADC * (5.0f / 1023.0f);
 
   // Loss is undefined when either reading is zero.
-  bool lossValid = waveguideADC > 0 && waveguideBaseline > 0;
-  double loss = lossValid ? 10 * log10(waveguideBaseline / waveguideADC) : 0;  // Optical loss in dB
+  bool lossValid = waveguideADC > 0;
+  double loss = lossValid ? 10 * log10(WAVEGUIDE_BASELINE / waveguideADC) : 0;  // Optical loss in dB
 
   double angle = ANGLE_A * sq(loss) + ANGLE_B * loss + ANGLE_C;  // Bending angle in degrees
   if (angle < 0) angle = 0;

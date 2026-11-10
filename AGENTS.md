@@ -37,22 +37,27 @@ Update it when behaviour changes.
 
 1. Pump off, exhaust open, serial at 115200 baud.
 2. If the MPRLS isn't found, it prints `MPRLS sensor not found. Check wiring and reset.` and stops.
-3. It prints `Venting for 5 seconds. Leave the FSR released.`, waits 5 s, then records two baselines with the
-   bladder vented: the waveguide reading (`waveguideBaseline`) and atmospheric pressure (`pressureBaseline`).
-4. It prints the waveguide baseline, for example `Waveguide baseline: 716 counts (3.50 V)`, then
+3. It prints `Venting for 5 seconds. Leave the FSR released.`, waits 5 s, then records atmospheric pressure with
+   the bladder vented (`pressureBaseline`).
+4. It prints the fixed waveguide baseline, `Waveguide baseline: 787 counts (3.85 V), fixed in src/main.cpp`, then
    `Ready. Press and hold the FSR to inflate.`
 
 Opening the serial port normally resets an Uno, so every dashboard connection or serial-monitor start re-runs this
-and re-zeros both baselines. The finger should be straight and the bladder empty at that moment.
+and re-zeros the pressure. The bladder should be empty at that moment. The waveguide baseline is **not** measured at
+startup: it's the constant `WAVEGUIDE_BASELINE`, so the loss and angle mean the same in every session.
 
 ### Measurements
 
 - **Bladder pressure** (`Press(psi)`): MPRLS hPa ÷ 68.9476, minus `pressureBaseline`. This is gauge pressure, about 0
   when vented.
-- **Optical loss** (`Loss(dB)`): `10·log10(waveguideBaseline / reading)`. 0 dB at rest, rising with bending. `--`
-  when either reading is 0.
-- **Angle** (`Angle(deg)`): `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C`, floored at 0. The coefficients are a
-  **placeholder fit** (about 85° per dB) until the sleeve is calibrated. `--` when the loss is `--`.
+- **Optical loss** (`Loss(dB)`): `10·log10(WAVEGUIDE_BASELINE / reading)`. `WAVEGUIDE_BASELINE` is fixed at 787
+  counts (3.85 V), the straight-finger reading during the 2026-11-10 calibration, so the loss is about 0 dB straight
+  and rises with bending. It goes negative if the light is brighter than that. `--` when the reading is 0. Because
+  the baseline is fixed, anything that changes the light level (LED, potentiometer, wiring, sleeve position) shifts
+  every loss and angle until the baseline and fit are measured again.
+- **Angle** (`Angle(deg)`): `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C`, floored at 0. The coefficients come from the
+  2026-11-10 calibration (5 points, 0 to 90°, RMS error 5.6°), converted from that session's 33-count startup
+  baseline to the fixed 787. `--` when the loss is `--`.
 - **Waveguide voltage** (`Wave(V)`): the raw A1 reading × 5/1023.
 - **Raw waveguide reading** (`Wave(raw)`): the same A1 reading in ADC counts, 0 to 1023, for debugging the light
   sensor at full resolution.
@@ -251,8 +256,9 @@ port.
 Fits the sketch's angle formula to measured points and prints the constants to paste into `src/main.cpp`. The page
 never changes the angle itself: what's shown and recorded is always the sketch's `Angle(deg)`.
 
-- **Capturing.** Connect with the finger straight and the bladder empty, because the sketch zeros the loss as it
-  starts. Then bend the finger (by hand, or with Inflate and Hold), measure the angle with a protractor, type it in
+- **Capturing.** Connect with the bladder empty, because the sketch zeros the pressure as it starts. The loss is
+  measured against the fixed `WAVEGUIDE_BASELINE`, so keep the light level (LED, potentiometer, wiring) the same
+  from capturing to using the fit. Then bend the finger (by hand, or with Inflate and Hold), measure the angle with a protractor, type it in
   and press **Capture** (or Enter). The page averages the next 5, 10 or 25 data rows (about 1, 2 or 5 s) and saves a
   point: the measured angle, the mean `Loss(dB)` and its standard deviation ("spread"), the mean `Angle(deg)` the
   sketch printed, pressure, `Wave(V)`, time and which connection it came from. Rows with `--` loss are left out of
@@ -263,8 +269,7 @@ never changes the angle itself: what's shown and recorded is always the sketch's
   optionally with `C = 0`. Predictions are floored at 0, as in the sketch. Shown: the equation and R², RMS and maximum
   error of the new fit, the RMS error of the sketch's current angle at the same points, and a plot of the measured
   points, the new fit (dotted where it extrapolates), the current sketch and the live loss. It warns when the fit
-  doesn't keep rising across the points, when there are only as many points as terms, and when points come from more
-  than one connection (each connection re-zeros the loss). The live readouts show both angles and say when the live
+  doesn't keep rising across the points and when there are only as many points as terms. The live readouts show both angles and say when the live
   loss is outside the captured range.
 - **Points.** Untick a point to leave it out of the fit, or remove it. Points are kept in the browser's
   `localStorage` (`flexsense.calibration.v1`) until **Clear all**, so a reload doesn't lose them. **Download points
@@ -276,11 +281,11 @@ never changes the angle itself: what's shown and recorded is always the sketch's
 
 For checking the light sensor and the serial link. It shows only Arduino data, never the simulator.
 
-- **Light sensor on A1.** The latest `Wave(raw)` in counts, its voltage, the startup baseline (parsed from the
+- **Light sensor on A1.** The latest `Wave(raw)` in counts, its voltage, the fixed baseline (parsed from the
   sketch's `Waveguide baseline:` line) and the reading as a percentage of the baseline. A bar shows where the
   reading sits on 0 to 5 V, with the baseline marked in amber and 3 to 4 V shaded as a good straight-finger range.
-  It warns when A1 reads 0 (no light, or not wired to A1), when it's at full scale (turn the potentiometer down) and
-  when the baseline is 0 (the loss can't be worked out until you reconnect). With a sketch that has no `Wave(raw)`
+  It warns when A1 reads 0 (no light, or not wired to A1) and when it's at full scale (turn the potentiometer down).
+  With a straight finger the reading should be close to 100% of the baseline. With a sketch that has no `Wave(raw)`
   column, it estimates the counts from `Wave(V)` and says so.
 - **Inflate, Hold and Vent**, the same as in the calibration view, to see how the reading follows a bend.
 - **Chart.** The raw reading over the last 20 s with the baseline dashed. Time when the pump ran (`Pump` is `ON` or
@@ -355,8 +360,10 @@ There are no automated tests in the repo. Changes so far have been checked like 
 
 ## Known gaps and open items
 
-- **The angle calibration is a placeholder.** Measure angle against loss on the sleeve with the dashboard's
-  Calibration view and paste the fitted `ANGLE_A`, `ANGLE_B` and `ANGLE_C` into the sketch.
+- **The angle calibration is rough and tied to one light level.** It has 5 points (RMS error 5.6°), and on
+  2026-11-10, after it was made, the straight-finger reading was 311 to 376 counts against the 787 baseline, so a
+  straight finger read about 15 to 23°. After changing the light level, set `WAVEGUIDE_BASELINE` to the new
+  straight-finger `Wave(raw)` and recalibrate.
 - **`MAX_DASHBOARD_PSI` is 30 psi, above what the MPRLS can measure** (about 10 psi gauge). Dashboard inflation
   therefore has no working pressure cut-off, only the FSR stop and the timeout. A limit that works must stay below
   about 10 psi.

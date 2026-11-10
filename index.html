@@ -217,7 +217,7 @@
         <input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3" aria-label="Trial name">
         <button class="secondary" id="downloadBtn" type="button" disabled>Download CSV</button>
         <button class="info-btn" type="button" aria-label="About connecting and recording">i</button><span class="info-text" hidden>
-          <span class="p"><b>Connecting.</b> Use Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</span>
+          <span class="p"><b>Connecting.</b> Use Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the pressure, so keep the bladder empty. The optical loss uses a fixed baseline in <code>src/main.cpp</code>. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</span>
           <span class="p"><b>Recording.</b> Records everything the Arduino sends, from Connect to Disconnect. The trial name goes in the file name and in every row.</span>
         </span>
       </div>
@@ -301,7 +301,7 @@
         <section class="panel cal-capture">
           <div class="panel-head"><h2>Capture points <button class="info-btn" type="button" aria-label="How to calibrate">i</button><span class="info-text" hidden>
             <span class="p">Fit the bend angle to the optical loss, then paste the result into the sketch.</span>
-            <span class="p">1. Connect with the finger straight and the bladder empty. The sketch zeros the optical loss as it starts.</span>
+            <span class="p">1. Connect with the bladder empty. The optical loss is measured against the fixed <code>WAVEGUIDE_BASELINE</code> in <code>src/main.cpp</code>, so don't change the LED, potentiometer or wiring between capturing and using the fit.</span>
             <span class="p">2. Capture 0° first. Then bend the finger to angles across the range you'll use, by hand or with Inflate and Hold.</span>
             <span class="p">3. At each bend, measure the angle with a protractor, type it in and press Capture. Hold still while it averages.</span>
             <span class="p">4. 6 to 10 points spread over the range is plenty. Capturing 0° again at the end shows whether the reading drifted.</span>
@@ -368,7 +368,7 @@
         <section class="panel">
           <div class="panel-head"><h2>Light sensor on A1 <button class="info-btn" type="button" aria-label="About the light sensor">i</button><span class="info-text" hidden>
             <span class="p">The waveguide's photodiode, read with <code>analogRead(A1)</code>: 0 to 1023 counts for 0 to 5 V. More light gives a higher reading, so bending the finger lowers it.</span>
-            <span class="p"><b>Baseline</b> is the reading the sketch took as it started, with the bladder vented. The optical loss compares every reading with it, so reconnect after changing the wiring or the potentiometer.</span>
+            <span class="p"><b>Baseline</b> is the fixed reference <code>WAVEGUIDE_BASELINE</code> in <code>src/main.cpp</code>, the straight-finger reading when the angle was calibrated. The optical loss compares every reading with it. With the finger straight the reading should be close to 100%; if not, the light level has changed and the angles are off.</span>
             <span class="p"><b>0 counts</b>: no light reaches the photodiode, or it isn't wired to A1. Check that the LED is lit, the potentiometer isn't turned all the way down (0 Ω gives 0 V) and the photodiode's signal wire goes to A1.</span>
             <span class="p"><b>1023 counts</b>: the reading is at 5 V and can't show small changes. Turn the potentiometer down.</span>
             <span class="p">The shaded part of the bar, 3 to 4 V, is a good place for the straight-finger reading: fine steps, with room left below 5 V.</span>
@@ -376,7 +376,7 @@
           <div class="debug-metrics">
             <div class="metric"><div class="metric-label">Raw reading</div><div class="metric-value"><span id="dbgRaw">--</span> <small>counts</small></div></div>
             <div class="metric"><div class="metric-label">Voltage</div><div class="metric-value"><span id="dbgVolts">--</span> <small>V</small></div></div>
-            <div class="metric"><div class="metric-label">Startup baseline</div><div class="metric-value"><span id="dbgBase">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Baseline (fixed)</div><div class="metric-value"><span id="dbgBase">--</span> <small>counts</small></div></div>
             <div class="metric"><div class="metric-label">Light vs. baseline</div><div class="metric-value"><span id="dbgRatio">--</span> <small>%</small></div></div>
           </div>
           <div class="control-group"><span class="group-label">Where the reading sits, 0 to 5 V</span>
@@ -390,7 +390,7 @@
         </section>
         <section class="panel">
           <div class="panel-head"><h2>Raw reading, last 20 s</h2><label class="check"><input type="checkbox" id="dbgZoom"> Zoom to the data</label></div>
-          <div class="debug-legend"><span><i class="key-raw"></i> Raw reading</span><span><i class="key-base"></i> Startup baseline</span><span><i class="key-pump"></i> Pump running</span></div>
+          <div class="debug-legend"><span><i class="key-raw"></i> Raw reading</span><span><i class="key-base"></i> Baseline</span><span><i class="key-pump"></i> Pump running</span></div>
           <div class="chart-wrap"><svg id="debugChart" role="img" aria-label="Raw light sensor reading over the last 20 seconds"></svg></div>
           <div class="stats">
             <div class="metric"><div class="metric-label">Min</div><div class="metric-value"><span id="dbgMin">--</span> <small>counts</small></div></div>
@@ -1110,7 +1110,7 @@
         rmse: rms(errors), maxError: Math.max(...errors.map(Math.abs)),
         r2: ssTotal > 0 ? 1 - errors.reduce((sum, e) => sum + e * e, 0) / ssTotal : NaN,
         minLoss: Math.min(...losses), maxLoss: Math.max(...losses), minAngle: Math.min(...angles), maxAngle: Math.max(...angles),
-        sessions: new Set(used.map(p => p.session)).size, time: times.length ? Math.max(...times) : Date.now(),
+        time: times.length ? Math.max(...times) : Date.now(),
       };
     }
     function fitWarnings(fit) {
@@ -1118,7 +1118,6 @@
       if (fit.n === fit.k) notes.push(`With only ${fit.n} points the curve passes through every one, so the error reads 0. Add points to see the real error.`);
       const slope = loss => 2 * fit.A * loss + fit.B;
       if (!(slope(fit.minLoss) > 0 && slope(fit.maxLoss) > 0)) notes.push('The fitted angle doesn\'t keep rising with loss across the points, so two bends could read as the same angle. Check the points, add more, or try the linear fit.');
-      if (fit.sessions > 1) notes.push(`These points come from ${fit.sessions} connections. Each connection re-zeros the optical loss, so they only line up if the sleeve's light level didn't change in between.`);
       return notes;
     }
     function equationText(fit) {
@@ -1410,7 +1409,6 @@
       else if (live) {
         if (raw === 0) notes.push(['warn', 'A1 reads 0: no light reaches the photodiode, or it isn\'t wired to A1.']);
         else if (raw >= 1020) notes.push(['warn', 'A1 is at 5 V, so small changes are lost. Turn the potentiometer down.']);
-        if (base === 0) notes.push(['warn', 'The startup baseline is 0, so the sketch can\'t work out the loss. Fix the signal, then reconnect.']);
         if (!debug.exact) notes.push(['info', 'Estimated from Wave(V), to about ±1 count. Upload the current sketch for exact counts.']);
       }
       $('dbgWarnings').innerHTML = notes.map(([kind, text]) => `<li class="${kind === 'info' ? 'info' : ''}">${text}</li>`).join('');
