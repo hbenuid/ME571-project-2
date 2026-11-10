@@ -55,14 +55,15 @@ changing it in the sketch does nothing once a baseline has been saved: save the 
 - **Bladder pressure** (`Press(psi)`): MPRLS hPa ÷ 68.9476, minus `pressureBaseline`. This is gauge pressure, about 0
   when vented.
 - **Optical loss** (`Loss(dB)`): `10·log10(waveguideBaseline / reading)`. `waveguideBaseline` is the saved
-  straight-finger reading (default 787 counts, 3.85 V, from the 2026-11-10 calibration), so the loss is about 0 dB
-  straight and rises with bending. It goes negative if the light is brighter than that. `--` when the reading is 0. Because
+  straight-finger reading (default 787 counts, 3.85 V), so the loss is near 0 dB straight and rises with bending. It
+  goes negative if the light is brighter than the baseline. `--` when the reading is 0. Because
   the baseline is fixed, anything that changes the light level (LED, potentiometer, wiring, sleeve position) shifts
-  every loss and angle until a new baseline is saved with the finger straight.
+  every loss and angle until a new baseline is saved and the angle recalibrated.
 - **Angle** (`Angle(deg)`): `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C`, floored at 0. The coefficients come from the
-  2026-11-10 calibration (5 points, 0 to 90°, RMS error 5.6°), converted from that session's 33-count startup
-  baseline to 787. They expect a straight finger to read 0 dB, so they still apply after saving a new baseline with
-  the finger straight. `--` when the loss is `--`.
+  second 2026-11-10 calibration (5 points, 1.64 to 5.32 dB and 0 to 90°, RMS error 7.4°), measured against the
+  787-count baseline. They hold only while that baseline is saved: a straight finger read 1.64 dB, not 0, so even
+  re-saving the straight-finger reading as the baseline shifts every angle. After changing the baseline,
+  recalibrate. `--` when the loss is `--`.
 - **Waveguide voltage** (`Wave(V)`): the raw A1 reading × 5/1023.
 - **Raw waveguide reading** (`Wave(raw)`): the same A1 reading in ADC counts, 0 to 1023, for debugging the light
   sensor at full resolution.
@@ -291,13 +292,13 @@ For checking the light sensor and the serial link. It shows only Arduino data, n
   sketch's `Waveguide baseline:` line) and the reading as a percentage of the baseline. A bar shows where the
   reading sits on 0 to 5 V, with the baseline marked in amber and 3 to 4 V shaded as a good straight-finger range.
   It warns when A1 reads 0 (no light, or not wired to A1) and when it's at full scale (turn the potentiometer down).
-  With a straight finger the reading should be close to 100% of the baseline. With a sketch that has no `Wave(raw)`
+  With a sketch that has no `Wave(raw)`
   column, it estimates the counts from `Wave(V)` and says so.
 - **Set the baseline.** A number box (filled with the current baseline), **Use current reading**, which fills in the
   mean `Wave(raw)` of the last 2 s, and **Save to Arduino**, which sends `B<counts>\n` and waits up to 2 s for the
   sketch's `…, saved` line. Without that answer it says to upload the current sketch. Saving needs the first data
-  row, and the button stays off while the box is empty, out of range or equal to the saved value. Save with the
-  finger straight and the bladder vented, since the angle constants expect 0 dB there.
+  row, and the button stays off while the box is empty, out of range or equal to the saved value. The angle constants
+  are fitted against one baseline, so set the baseline first, then calibrate, and recalibrate after changing it.
 - **Inflate, Hold and Vent**, the same as in the calibration view, to see how the reading follows a bend.
 - **Chart.** The raw reading over the last 20 s with the baseline dashed. Time when the pump ran (`Pump` is `ON` or
   `Mode` is `INFL`) is shaded, to show noise from the pump. **Zoom to the data** fits the scale to the readings,
@@ -374,10 +375,9 @@ There are no automated tests in the repo. Changes so far have been checked like 
 
 ## Known gaps and open items
 
-- **The angle calibration is rough and tied to one light level.** It has 5 points (RMS error 5.6°), and on
-  2026-11-10, after it was made, the straight-finger reading was 311 to 376 counts against the 787 baseline, so a
-  straight finger read about 12 to 23°. Saving a new baseline with the finger straight brings that back to about
-  0°; recalibrating with more points would make the fit itself better.
+- **The angle calibration is rough and tied to one light level and baseline.** It has 5 points (RMS error 7.4°)
+  against the 787-count baseline. More points would make the fit better. Any change to the light level (LED,
+  potentiometer, wiring, sleeve) or the saved baseline needs a recalibration.
 - **`MAX_DASHBOARD_PSI` is 30 psi, above what the MPRLS can measure** (about 10 psi gauge). Dashboard inflation
   therefore has no working pressure cut-off, only the FSR stop and the timeout. A limit that works must stay below
   about 10 psi.

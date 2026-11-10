@@ -59,10 +59,11 @@ float pressureBaseline = 0;
 float bladderPsi = 0;  // Latest bladder (gauge) pressure
 
 // Angle calibration: angle (deg) = ANGLE_A * loss^2 + ANGLE_B * loss + ANGLE_C, loss in dB.
-// Fitted 2026-11-10 from 5 points, 0.00 to 7.81 dB and 0 to 90 deg. RMS error 5.6 deg.
-const double ANGLE_A = 1.32727;
-const double ANGLE_B = 0.14652;
-const double ANGLE_C = 0.89028;
+// Fitted 2026-11-10 from 5 points, 1.64 to 5.32 dB and 0 to 90 deg. RMS error 7.4 deg.
+// Measured against a waveguide baseline of 787 counts: it holds only while that baseline is saved.
+const double ANGLE_A = 2.241;
+const double ANGLE_B = 9.35217;
+const double ANGLE_C = -21.9498;
 
 // Serial output
 const unsigned long PRINT_INTERVAL_MS = 200;  // 5 rows per second

@@ -369,7 +369,7 @@
         <section class="panel">
           <div class="panel-head"><h2>Light sensor on A1 <button class="info-btn" type="button" aria-label="About the light sensor">i</button><span class="info-text" hidden>
             <span class="p">The waveguide's photodiode, read with <code>analogRead(A1)</code>: 0 to 1023 counts for 0 to 5 V. More light gives a higher reading, so bending the finger lowers it.</span>
-            <span class="p"><b>Baseline</b> is the straight-finger reading saved on the Arduino. The optical loss compares every reading with it. With the finger straight the reading should be close to 100%; if not, the light level has changed and the angles are off until you save a new baseline below.</span>
+            <span class="p"><b>Baseline</b> is the straight-finger reading saved on the Arduino. The optical loss compares every reading with it. If the light level changes (LED, potentiometer, wiring, sleeve), the angles are off until you set a new baseline and recalibrate.</span>
             <span class="p"><b>0 counts</b>: no light reaches the photodiode, or it isn't wired to A1. Check that the LED is lit, the potentiometer isn't turned all the way down (0 Ω gives 0 V) and the photodiode's signal wire goes to A1.</span>
             <span class="p"><b>1023 counts</b>: the reading is at 5 V and can't show small changes. Turn the potentiometer down.</span>
             <span class="p">The shaded part of the bar, 3 to 4 V, is a good place for the straight-finger reading: fine steps, with room left below 5 V.</span>
@@ -386,7 +386,7 @@
           </div>
           <div class="control-group"><span class="group-label">Set the baseline <button class="info-btn" type="button" aria-label="About setting the baseline">i</button><span class="info-text" hidden>
             <span class="p">Straighten the finger, vent the bladder and let the reading settle. Then press <b>Use current reading</b>, which fills in the average of the last 2 s, and <b>Save to Arduino</b>. You can also type a number.</span>
-            <span class="p">The Arduino keeps it through restarts and uploads. The angle constants expect a straight finger to read 0 dB, so save a new baseline with the finger straight whenever the light level changes. Calibration points captured against another baseline don't line up with new ones.</span>
+            <span class="p">The Arduino keeps it through restarts and uploads. The angle constants in <code>src/main.cpp</code> are fitted against one baseline, so changing it shifts every angle: set the baseline first, then calibrate, and recalibrate after changing it. Calibration points captured against another baseline don't line up with new ones.</span>
           </span></span>
             <div class="baseline-row">
               <label>Baseline (counts)<input id="dbgBaseInput" type="number" min="1" max="1023" step="1" placeholder="1 to 1023"></label>
