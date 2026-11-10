@@ -39,7 +39,8 @@ Update it when behaviour changes.
 2. If the MPRLS isn't found, it prints `MPRLS sensor not found. Check wiring and reset.` and stops.
 3. It prints `Venting for 5 seconds. Leave the FSR released.`, waits 5 s, then records two baselines with the
    bladder vented: the waveguide reading (`waveguideBaseline`) and atmospheric pressure (`pressureBaseline`).
-4. It prints `Ready. Press and hold the FSR to inflate.`
+4. It prints the waveguide baseline, for example `Waveguide baseline: 716 counts (3.50 V)`, then
+   `Ready. Press and hold the FSR to inflate.`
 
 Opening the serial port normally resets an Uno, so every dashboard connection or serial-monitor start re-runs this
 and re-zeros both baselines. The finger should be straight and the bladder empty at that moment.
@@ -53,6 +54,8 @@ and re-zeros both baselines. The finger should be straight and the bladder empty
 - **Angle** (`Angle(deg)`): `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C`, floored at 0. The coefficients are a
   **placeholder fit** (about 85° per dB) until the sleeve is calibrated. `--` when the loss is `--`.
 - **Waveguide voltage** (`Wave(V)`): the raw A1 reading × 5/1023.
+- **Raw waveguide reading** (`Wave(raw)`): the same A1 reading in ADC counts, 0 to 1023, for debugging the light
+  sensor at full resolution.
 
 ### Control modes
 
@@ -89,8 +92,8 @@ A fixed-width, whitespace-separated table, one row every `PRINT_INTERVAL_MS` (20
 the header come before the first row and then every `HEADER_EVERY` (20) rows:
 
 ```
- Force(g)  Pump  Mode  Press(psi)  Loss(dB)  Angle(deg)  Wave(V)
-        0   OFF   FSR        0.01      0.00         1.1     3.50
+ Force(g)  Pump  Mode  Press(psi)  Loss(dB)  Angle(deg)  Wave(V)  Wave(raw)
+        0   OFF   FSR        0.01      0.00         1.1     3.50        716
 ```
 
 | Column | Width | Content |
@@ -102,6 +105,7 @@ the header come before the first row and then every `HEADER_EVERY` (20) rows:
 | `Loss(dB)` | 10 | Optical loss, 2 decimals, or `--` |
 | `Angle(deg)` | 12 | Bend angle, 1 decimal, or `--` |
 | `Wave(V)` | 9 | Waveguide voltage, 2 decimals |
+| `Wave(raw)` | 11 | Waveguide reading in ADC counts (0 to 1023), no decimals |
 
 The startup messages are plain text lines.
 
@@ -130,15 +134,16 @@ On Connect, Chrome and Edge open a port chooser. Firefox shows a popup, "Allow t
 ports?", with a "Select a serial port:" dropdown and **Allow** / **Block**. Pick the Uno (`usbmodem…`) and click
 Allow. Cancelling Chrome's chooser, or Block in Firefox, shows "No port selected."
 
-The page has two views: **Live session** (the default) and **Calibration** (`#calibration`). A top bar, shared by
-both, holds the FlexSense name, the two view tabs (the current one highlighted), the status, the one **Connect to
-Arduino** button, the Trial name box and **Download CSV**. Both views share one serial connection and recording. The
+The page has three views: **Live session** (the default), **Calibration** (`#calibration`) and **Debug**
+(`#debug`). A top bar, shared by all three, holds the FlexSense name, the view tabs (the current one highlighted),
+the status, the one **Connect to Arduino** button, the Trial name box and **Download CSV**. All views share one
+serial connection and recording. The
 status reads `Simulator`, `Arduino · starting up` (connected, before the first data row), `Arduino · recording
 m:ss`, or after a disconnect `Simulator · recorded m:ss, not downloaded` (amber) or `…, downloaded`. Its tooltip
 counts the rows. The sketch's startup messages and connection problems appear on a line under the top bar. The
-live session drives the bladder through the exercise modes below. The calibration view has its own Inflate, Hold and
-Vent buttons for setting a bend. Opening the calibration view stops the automatic cycle, releases held keys and ends
-a game, because a capture needs a still finger.
+live session drives the bladder through the exercise modes below. The calibration and debug views have their own
+Inflate, Hold and Vent buttons for setting a bend. Opening either of them stops the automatic cycle, releases held
+keys and ends a game, because a capture needs a still finger. The arrow keys only work in the live session.
 
 Explanations stay out of sight behind small **(i)** buttons next to headings and the top bar. Each `.info-btn` shows
 the hidden `.info-text` right after it in one shared popup (`#infoPop`): hovering shows it, a click or tap keeps it
@@ -267,12 +272,31 @@ never changes the angle itself: what's shown and recorded is always the sketch's
 - **Applying it.** The "Paste into src/main.cpp" block replaces the sketch's lines from `// Angle calibration` down to
   `ANGLE_C`. Upload, reconnect, and the sketch prints the new angle.
 
+### Debug view
+
+For checking the light sensor and the serial link. It shows only Arduino data, never the simulator.
+
+- **Light sensor on A1.** The latest `Wave(raw)` in counts, its voltage, the startup baseline (parsed from the
+  sketch's `Waveguide baseline:` line) and the reading as a percentage of the baseline. A bar shows where the
+  reading sits on 0 to 5 V, with the baseline marked in amber and 3 to 4 V shaded as a good straight-finger range.
+  It warns when A1 reads 0 (no light, or not wired to A1), when it's at full scale (turn the potentiometer down) and
+  when the baseline is 0 (the loss can't be worked out until you reconnect). With a sketch that has no `Wave(raw)`
+  column, it estimates the counts from `Wave(V)` and says so.
+- **Inflate, Hold and Vent**, the same as in the calibration view, to see how the reading follows a bend.
+- **Chart.** The raw reading over the last 20 s with the baseline dashed. Time when the pump ran (`Pump` is `ON` or
+  `Mode` is `INFL`) is shaded, to show noise from the pump. **Zoom to the data** fits the scale to the readings,
+  otherwise it's 0 to 1023. Min, max, mean and spread (standard deviation, the noise when the finger is still) are over the
+  same 20 s.
+- **Serial output.** The last 200 lines exactly as received, startup messages and headers included. It follows new
+  lines unless you scroll up, and **Pause** freezes it. Each Connect clears it.
+
 ## Keeping the sketch and dashboard in sync
 
 These are defined in both files, so change them together:
 
-- **Header names.** The page reads `Angle(deg)`, `Loss(dB)`, `Press(psi)`, `Wave(V)` and `Mode` by name and lists
-  every column in `DEFAULT_COLUMNS`.
+- **Header names.** The page reads `Angle(deg)`, `Loss(dB)`, `Press(psi)`, `Wave(V)`, `Wave(raw)`, `Pump` and `Mode`
+  by name and lists every column in `DEFAULT_COLUMNS`.
+- **Baseline message.** The debug view reads the number after `Waveguide baseline:` in the sketch's startup line.
 - **Angle formula.** The calibration view fits `ANGLE_A·loss² + ANGLE_B·loss + ANGLE_C` floored at 0, and its paste
   block uses those constant names and the sketch's `// Angle calibration:` comment line. If the sketch's formula
   changes, change the fit in the page too.

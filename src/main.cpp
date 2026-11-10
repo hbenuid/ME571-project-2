@@ -196,6 +196,13 @@ void setup() {
   waveguideBaseline = analogRead(WAVEGUIDE_PIN);
   pressureBaseline = readPressurePsi();
 
+  // The dashboard's Debug view reads this line.
+  Serial.print("Waveguide baseline: ");
+  Serial.print((int)waveguideBaseline);
+  Serial.print(" counts (");
+  Serial.print(waveguideBaseline * 5.0 / 1023.0, 2);
+  Serial.println(" V)");
+
   Serial.println("Ready. Press and hold the FSR to inflate.");
 }
 
@@ -242,7 +249,7 @@ void loop() {
   // The dashboard (index.html) finds columns by these header names.
   if (rowCount % HEADER_EVERY == 0) {
     Serial.println();
-    Serial.println(" Force(g)  Pump  Mode  Press(psi)  Loss(dB)  Angle(deg)  Wave(V)");
+    Serial.println(" Force(g)  Pump  Mode  Press(psi)  Loss(dB)  Angle(deg)  Wave(V)  Wave(raw)");
   }
   rowCount++;
 
@@ -258,5 +265,6 @@ void loop() {
     printText("--", 12);
   }
   printValue(waveguideVoltage, 9, 2);
+  printValue(waveguideADC, 11, 0);  // A1 in ADC counts, 0 to 1023
   Serial.println();
 }
