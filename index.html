@@ -14,50 +14,44 @@
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
-    body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-    aside { padding: 24px 16px; background: var(--panel); border-right: 1px solid var(--edge); }
-    .brand { display: flex; gap: 10px; align-items: center; margin-bottom: 28px; }
-    .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: #fff; background: var(--ink); font-weight: 700; font-size: 13px; }
-    .brand strong { display: block; font-size: 15px; }
-    .brand small { color: var(--muted); font-size: 12px; }
-    nav { display: grid; gap: 2px; margin-bottom: 28px; }
-    nav a { padding: 8px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; }
-    nav a.active, nav a:hover { color: var(--ink); background: var(--hover); }
-    .side-label, label { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
-    .session { margin-top: 4px; }
-    .session-row { display: flex; justify-content: space-between; margin: 8px 0; color: var(--muted); font-size: 13px; }
-    .session-row b { color: var(--ink); font-weight: 500; }
-    main { padding: 28px 32px 40px; max-width: 1540px; width: 100%; min-width: 0; margin: auto; }
-    header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
-    h1 { margin: 0 0 4px; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
-    .subtitle { color: var(--muted); }
-    .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; padding: 6px 0; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
-    .dot.off { background: var(--danger); }
-    .mode-bar { display: flex; gap: 16px; align-items: stretch; justify-content: space-between; margin-bottom: 16px; }
-    .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; flex: 1; max-width: 760px; padding: 4px; border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
-    .mode-tab { padding: 8px 12px; text-align: left; color: var(--muted); background: transparent; border-color: transparent; font-weight: 400; }
-    .mode-tab:hover:not(:disabled) { background: var(--hover); border-color: transparent; }
-    .mode-tab b { display: block; color: var(--ink); font-size: 14px; font-weight: 600; }
-    .mode-tab small { display: block; font-size: 12px; }
-    .mode-tab[aria-pressed="true"], .mode-tab[aria-pressed="true"]:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-soft-edge); }
-    .mode-tab[aria-pressed="true"] b { color: var(--accent-dark); }
-    .actuator { min-width: 200px; padding: 8px 14px; border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
-    .actuator small { display: block; color: var(--muted); font-size: 12px; }
-    .actuator b { display: block; margin-top: 2px; color: var(--ink); font-size: 16px; font-weight: 600; }
-    .layout { display: grid; grid-template-columns: minmax(380px, 1.08fr) minmax(390px, .92fr); gap: 16px; }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background: var(--bg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    /* Top bar: brand, views, connection and recording */
+    .topbar { background: var(--panel); border-bottom: 1px solid var(--edge); }
+    .topbar-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; max-width: 1540px; margin: 0 auto; padding: 10px 32px; }
+    .brand { display: flex; gap: 10px; align-items: center; font-size: 15px; }
+    .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: #fff; background: var(--ink); font-weight: 700; font-size: 12px; }
+    .view-tabs { display: flex; gap: 4px; }
+    .view-tabs a { padding: 6px 12px; border-radius: 6px; color: var(--muted); font-weight: 500; text-decoration: none; }
+    .view-tabs a:hover, .view-tabs a.active { color: var(--ink); background: var(--hover); }
+    .session-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+    .session-bar button { padding: 6px 12px; }
+    .session-bar input[type=text] { width: 200px; margin: 0; padding: 6px 10px; }
+    .status { display: flex; align-items: center; gap: 8px; margin-right: 6px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .status .warn { color: var(--warn); }
+    .dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: #a9a8a2; }
+    .dot.live { background: var(--ok); }
+    .serial-status { flex-basis: 100%; margin: -4px 0 0; color: var(--muted); font-size: 12px; text-align: right; }
+    .serial-status.warn { color: var(--warn); }
+    .serial-status:empty { display: none; }
+    main { max-width: 1540px; margin: 0 auto; padding: 20px 32px 40px; }
+    .mode-bar { margin-bottom: 16px; }
+    .mode-tabs { display: inline-grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 4px; padding: 4px; border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
+    .mode-tab { padding: 6px 16px; color: var(--muted); background: transparent; border-color: transparent; }
+    .mode-tab:hover:not(:disabled) { color: var(--ink); background: var(--hover); border-color: transparent; }
+    .mode-tab[aria-pressed="true"], .mode-tab[aria-pressed="true"]:hover:not(:disabled) { color: var(--accent-dark); background: var(--accent-soft); border-color: var(--accent-soft-edge); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 16px; }
+    .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .panel { border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); overflow: hidden; }
-    .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--edge); }
-    .panel-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
-    .panel-head span { color: var(--muted); font-size: 12px; }
-    .finger-stage { height: 442px; position: relative; overflow: hidden; background: var(--stage); }
-    .layout > .panel:first-child { display: flex; flex-direction: column; }
-    .layout > .panel:first-child .finger-stage { flex: 1; height: auto; min-height: 442px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 6px 14px; padding: 14px 18px; border-bottom: 1px solid var(--edge); }
+    .panel-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; }
+    .panel-head > span { color: var(--muted); font-size: 12px; }
+    .actuator b { margin-left: 4px; color: var(--ink); font-size: 13px; font-weight: 600; }
+    .stage-panel { display: flex; flex-direction: column; }
+    .finger-stage { flex: 1; min-height: 420px; position: relative; overflow: hidden; background: var(--stage); }
     #finger { position: absolute; inset: 0; width: 100%; height: 100%; }
     .game-layer { position: absolute; inset: 0; }
     #game { display: block; width: 100%; height: 100%; }
-    .finger-stage:not(.game-on) .game-layer, .finger-stage.game-on #finger, .finger-stage.game-on .stage-legend { display: none; }
+    .finger-stage:not(.game-on) .game-layer, .finger-stage.game-on #finger { display: none; }
     /* In the game the readouts sit in a strip along the bottom, below the ship's range. */
     .game-hud { position: absolute; right: 16px; bottom: 12px; display: flex; gap: 8px; }
     .game-hud span, .finger-stage.game-on .angle-badge { display: flex; gap: 8px; align-items: baseline; padding: 4px 10px; border-radius: 6px; background: var(--panel); border: 1px solid var(--edge); color: var(--muted); font-size: 12px; }
@@ -67,38 +61,40 @@
     .game-overlay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100% - 40px)); padding: 16px 20px; text-align: center; border-radius: 8px; background: var(--panel); border: 1px solid var(--edge); }
     .game-overlay strong { display: block; margin-bottom: 4px; font-size: 18px; font-weight: 600; }
     .game-overlay span { color: var(--muted); font-size: 13px; }
-    .angle-badge { position: absolute; left: 18px; top: 18px; padding: 8px 12px; border-radius: 6px; background: var(--panel); border: 1px solid var(--edge); }
-    .angle-badge small { display: block; color: var(--muted); font-size: 12px; }
-    .angle-badge strong { display: block; color: var(--ink); font-size: 28px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
-    .stage-legend { position: absolute; bottom: 14px; left: 18px; right: 18px; display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
-    .stage-legend span { display: inline-flex; gap: 7px; align-items: center; }
+    .angle-badge { position: absolute; left: 18px; top: 18px; padding: 8px 14px 10px; border-radius: 6px; background: var(--panel); border: 1px solid var(--edge); }
+    .angle-badge small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+    .angle-badge small::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--angle); }
+    .angle-badge strong { display: block; color: var(--ink); font-size: 40px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
     .legend-line { width: 20px; height: 3px; border-radius: 2px; background: var(--accent); }
-    .legend-dash { width: 20px; border-top: 2px dashed #a9a8a2; }
-    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--edge); }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--edge); }
     .metric { padding: 14px 18px; }
     .metrics .metric + .metric { border-left: 1px solid var(--edge); }
     .metric-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
     .metrics .metric-label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
-    .metrics .metric:nth-child(1) .metric-label::before { background: var(--loss); }
-    .metrics .metric:nth-child(2) .metric-label::before { background: var(--angle); }
-    .metrics .metric:nth-child(3) .metric-label::before { background: var(--pressure); }
+    .metrics .loss .metric-label::before { background: var(--loss); }
+    .metrics .pressure .metric-label::before { background: var(--pressure); }
     .metric-value { margin-top: 4px; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .metric-value small { color: var(--muted); font-size: 13px; font-weight: 400; }
-    .chart-panel { grid-column: 1 / -1; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    .chart-legend span { display: inline-flex; gap: 6px; align-items: center; }
+    .chart-legend i { width: 16px; height: 3px; border-radius: 2px; }
     .chart-wrap { padding: 8px 18px 12px; }
-    #chart { width: 100%; height: 242px; display: block; }
+    #chart { width: 100%; height: 220px; display: block; }
     .axis-label { fill: var(--muted); font-size: 11px; }
     .gridline { stroke: #ecece8; stroke-width: 1; }
-    .controls { display: grid; grid-template-columns: 1fr 1fr; }
     .control-group { padding: 16px 18px; border-bottom: 1px solid var(--edge); }
     .control-group:last-child { border-bottom: 0; }
-    .control-group:not(.full) + .control-group:not(.full) { border-left: 1px solid var(--edge); }
-    .control-group.full { grid-column: 1/-1; }
+    label, .group-label { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .group-label { display: flex; align-items: center; gap: 6px; }
     input[type=number], input[type=text], select { width: 100%; margin-top: 6px; padding: 8px 10px; color: var(--ink); background: #fff; border: 1px solid var(--field); border-radius: 6px; font: inherit; outline: none; }
     input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #2a78d626; }
     input:disabled { color: var(--muted); background: var(--hover); }
     .control-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .control-title b { color: var(--ink); font-size: 14px; font-weight: 600; text-align: right; }
+    .sim-settings summary { display: flex; align-items: center; gap: 8px; width: fit-content; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; list-style: none; }
+    .sim-settings summary::-webkit-details-marker { display: none; }
+    .sim-settings summary::before { content: ""; width: 6px; height: 6px; margin: 0 2px 2px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); }
+    .sim-settings[open] summary::before { margin-bottom: 4px; transform: rotate(45deg); }
     .calibration { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
     .timings { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 10px; margin-top: 8px; }
     .calibration label, .timings label, .source-row label, .capture-row label, .fit-options label { font-weight: 500; }
@@ -115,22 +111,23 @@
     button:disabled { opacity: .5; cursor: default; }
     .hold-btn { min-width: 130px; touch-action: none; user-select: none; -webkit-user-select: none; }
     .button-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
-    .button-row .hint { margin: 0; }
     .source-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; align-items: end; }
     .source-row input { margin-top: 0; }
     .hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
-    .hint a { color: var(--accent); }
+    .hint:empty { display: none; }
     code { color: var(--ink); background: var(--hover); padding: 1px 4px; border-radius: 4px; font-size: 12px; }
-    .view-tabs { display: none; gap: 4px; margin-bottom: 16px; }
-    .view-tabs a { flex: 1; padding: 8px 12px; border: 1px solid var(--edge); border-radius: 6px; color: var(--muted); background: var(--panel); text-align: center; text-decoration: none; }
-    .view-tabs a.active { color: var(--ink); background: var(--hover); }
+    /* Info buttons: the (i) shows the hidden text after it in one shared popup. */
+    button.info-btn { width: 18px; height: 18px; flex: none; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--field); border-radius: 50%; color: var(--muted); background: var(--panel); font: italic 600 11px/1 Georgia, "Times New Roman", serif; }
+    button.info-btn:hover:not(:disabled), button.info-btn[aria-expanded="true"] { color: var(--accent-dark); background: var(--accent-soft); border-color: var(--accent-soft-edge); }
+    .info-pop { position: fixed; z-index: 20; width: max-content; max-width: min(360px, calc(100vw - 24px)); padding: 10px 12px; border: 1px solid var(--field); border-radius: 6px; color: var(--ink); background: var(--panel); font-size: 12px; font-weight: 400; line-height: 1.5; }
+    .info-pop .p { display: block; }
+    .info-pop .p + .p { margin-top: 6px; }
+    .info-pop a { color: var(--accent); }
     /* Calibration view */
-    .cal-layout { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); grid-template-areas: "capture fit" "capture points" "code points"; gap: 16px; align-items: start; }
-    .cal-capture { grid-area: capture; } .cal-fit { grid-area: fit; } .cal-points { grid-area: points; } .cal-code { grid-area: code; }
-    .cal-layout .panel-head { flex-wrap: wrap; gap: 6px 14px; }
+    .cal-layout { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+    .cal-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .cal-layout .panel-head { flex-wrap: wrap; }
     .cal-layout .metric { display: flex; flex-direction: column; justify-content: space-between; }
-    .steps { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
-    .steps li { margin: 4px 0; }
     .live-row { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 8px; }
     .live-row .metric { padding: 2px 14px; }
     .live-row .metric:first-child { padding-left: 0; }
@@ -166,7 +163,7 @@
     .warnings li.info:before { content: ""; }
     .panel-body { padding: 16px 18px 18px; }
     .panel-foot { padding: 4px 18px 18px; }
-    .panel-head button { padding: 4px 12px; }
+    .panel-head > button { padding: 4px 12px; }
     .table-wrap { position: relative; overflow-x: auto; padding: 4px 10px 0; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
     th, td { padding: 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--edge); }
@@ -179,74 +176,70 @@
     button.icon { padding: 2px 8px; color: var(--muted); background: transparent; border-color: transparent; font-weight: 400; }
     button.icon:hover:not(:disabled) { color: var(--danger); background: transparent; border-color: transparent; }
     pre.snippet { margin: 0; padding: 12px 14px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); background: var(--stage); border: 1px solid var(--edge); border-radius: 6px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    @media (max-width: 1100px) { .cal-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "capture" "fit" "points" "code"; } }
-    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } main { padding: 20px 16px; } .layout { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } .view-tabs { display: flex; } }
-    @media (max-width: 720px) { .mode-bar { flex-direction: column; } .mode-tabs { max-width: none; } }
-    @media (max-width: 520px) { .controls, .metrics { grid-template-columns: 1fr; } .control-group.full { grid-column: auto; } .control-group:not(.full) + .control-group:not(.full) { border-left: 0; } .metrics .metric + .metric { border-left: 0; border-top: 1px solid var(--edge); } .calibration { grid-template-columns: 1fr; } header { gap: 15px; flex-direction: column; } .mode-tab { padding: 8px 10px; } .mode-tab small { display: none; } .layout > .panel:first-child .finger-stage { min-height: 360px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats { grid-template-columns: 1fr 1fr; } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) { .cal-layout { grid-template-columns: minmax(0, 1fr); } .cal-col { display: contents; } .cal-fit { order: 1; } .cal-points { order: 2; } .cal-code { order: 3; } }
+    @media (max-width: 900px) { .topbar-inner { padding: 10px 16px; } main { padding: 16px 16px 32px; } .layout { grid-template-columns: minmax(0, 1fr); } .session-bar { width: 100%; margin-left: 0; } .serial-status { text-align: left; } }
+    @media (max-width: 520px) { .session-bar input[type=text] { flex: 1 1 140px; width: auto; min-width: 0; } .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .mode-tab { padding: 6px 8px; } .calibration { grid-template-columns: 1fr; } .finger-stage { min-height: 340px; } .angle-badge strong { font-size: 32px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats { grid-template-columns: 1fr 1fr; } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside>
-      <div class="brand"><div class="brand-mark">FS</div><div><strong>FLEXSENSE</strong><small>Rehabilitation Suite</small></div></div>
-      <nav id="sideNav"><a href="#overview">◉ &nbsp; Live session</a><a href="#trends">⌁ &nbsp; Trends</a><a href="#calibration">⚙ &nbsp; Calibration</a></nav>
-      <span class="side-label">Session</span>
-      <div class="session">
-        <div class="session-row"><span>Patient</span><b>Demo patient</b></div>
-        <div class="session-row"><span>Exercise</span><b id="exerciseName">Automatic cycle</b></div>
-        <div class="session-row"><span>Duration</span><b id="duration">00:00</b></div>
-      </div>
-    </aside>
-    <main>
+  <header class="topbar" id="overview">
+    <div class="topbar-inner">
+      <div class="brand"><div class="brand-mark">FS</div><strong>FlexSense</strong></div>
       <nav class="view-tabs" aria-label="Views"><a href="#overview">Live session</a><a href="#calibration">Calibration</a></nav>
-      <header id="overview">
-        <div><h1 id="viewTitle">Live session</h1><div class="subtitle" id="viewSubtitle">Optical finger-sleeve feedback for guided rehab exercises</div></div>
-        <div class="status" id="status"><i class="dot"></i><span>Simulator</span></div>
-      </header>
-      <section class="mode-bar" id="modeBar" aria-label="Exercise mode">
-        <div class="mode-tabs" role="group" aria-label="Exercise mode">
-          <button class="mode-tab" type="button" data-mode="auto" aria-pressed="true"><b>Automatic</b><small>Timed bend and release</small></button>
-          <button class="mode-tab" type="button" data-mode="manual" aria-pressed="false"><b>Manual</b><small>Arrow keys move the finger</small></button>
-          <button class="mode-tab" type="button" data-mode="game" aria-pressed="false"><b>Game</b><small>Steer a ship with your finger</small></button>
+      <div class="session-bar">
+        <div class="status" id="status"><i class="dot" id="statusDot"></i><span id="statusText">Simulator</span></div>
+        <button id="connectBtn" type="button">Connect to Arduino</button>
+        <input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3" aria-label="Trial name">
+        <button class="secondary" id="downloadBtn" type="button" disabled>Download CSV</button>
+        <button class="info-btn" type="button" aria-label="About connecting and recording">i</button><span class="info-text" hidden>
+          <span class="p"><b>Connecting.</b> Use Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</span>
+          <span class="p"><b>Recording.</b> Records everything the Arduino sends, from Connect to Disconnect. The trial name goes in the file name and in every row.</span>
+        </span>
+      </div>
+      <p class="serial-status" id="serialStatus" aria-live="polite"></p>
+    </div>
+  </header>
+  <main>
+    <section class="mode-bar" id="modeBar" aria-label="Exercise mode">
+      <div class="mode-tabs" role="group" aria-label="Exercise mode">
+        <button class="mode-tab" type="button" data-mode="auto" aria-pressed="true">Automatic</button>
+        <button class="mode-tab" type="button" data-mode="manual" aria-pressed="false">Manual</button>
+        <button class="mode-tab" type="button" data-mode="game" aria-pressed="false">Game</button>
+      </div>
+    </section>
+    <section class="layout" id="liveView">
+      <section class="panel stage-panel">
+        <div class="panel-head"><h2 id="stageTitle">Articulated finger</h2></div>
+        <div class="finger-stage" id="stage">
+          <svg id="finger" viewBox="0 0 700 420" role="img" aria-label="Animated virtual finger showing bend angle">
+            <path d="M92 220 C180 203 255 211 330 221" stroke="#000" stroke-width="28" stroke-linecap="round" opacity=".05"/>
+            <path id="fingerShadow" display="none" d="" fill="none" stroke="#061214" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+            <path id="fingerBody" d="" fill="none" stroke="#e9b18a" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="sleeve" d="" fill="none" stroke="#c9ccd2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="sleeveGlow" d="" fill="none" stroke="#2a78d6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="fingerHighlight" display="none" d="" fill="none" stroke="#ffd0aa" stroke-width="9" stroke-linecap="round" opacity=".55"/>
+            <circle id="joint1" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/><circle id="joint2" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/><circle id="joint3" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/>
+            <path id="angleArc" d="" fill="none" stroke="#a9a8a2" stroke-width="2" stroke-dasharray="4 5"/>
+            <text id="arcLabel" fill="#1b1b1a" font-size="13" font-weight="700"></text>
+          </svg>
+          <div class="game-layer">
+            <canvas id="game" aria-label="Spaceship game. The ship's height follows the finger's bend angle."></canvas>
+            <div class="game-hud"><span>Score<b id="scoreText">0</b></span><span>Best<b id="bestText">0</b></span></div>
+            <div class="game-overlay" id="gameOverlay"><strong id="overlayTitle">Spaceship game</strong><span id="overlayText"></span></div>
+          </div>
+          <div class="angle-badge"><small id="angleLabel">Bend angle</small><strong><span id="angleReadout">0</span>°</strong></div>
         </div>
-        <div class="actuator"><small>Actuator · <span id="actuatorSource">simulated</span></small><b id="actuatorText">Vented</b></div>
+        <div class="metrics">
+          <div class="metric loss"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">0.00</span> <small>dB</small></div></div>
+          <div class="metric pressure"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">0.0</span> <small>PSI</small></div></div>
+        </div>
       </section>
-      <section class="layout" id="liveView">
-        <section class="panel">
-          <div class="panel-head"><h2 id="stageTitle">Articulated finger</h2><span id="stageNote">Right index · calibrated</span></div>
-          <div class="finger-stage" id="stage">
-            <svg id="finger" viewBox="0 0 700 420" role="img" aria-label="Animated virtual finger showing bend angle">
-              <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-              <path d="M92 220 C180 203 255 211 330 221" stroke="#000" stroke-width="28" stroke-linecap="round" opacity=".05"/>
-              <path id="fingerShadow" display="none" d="" fill="none" stroke="#061214" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
-              <path id="fingerBody" d="" fill="none" stroke="#e9b18a" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
-              <path id="sleeve" d="" fill="none" stroke="#c9ccd2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-              <path id="sleeveGlow" d="" fill="none" stroke="#2a78d6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              <path id="fingerHighlight" display="none" d="" fill="none" stroke="#ffd0aa" stroke-width="9" stroke-linecap="round" opacity=".55"/>
-              <circle id="joint1" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/><circle id="joint2" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/><circle id="joint3" r="8" fill="#2a78d6" stroke="#fff" stroke-width="2"/>
-              <path id="angleArc" d="" fill="none" stroke="#a9a8a2" stroke-width="2" stroke-dasharray="4 5"/>
-              <text id="arcLabel" fill="#1b1b1a" font-size="13" font-weight="700"></text>
-              <text x="54" y="196" fill="#8a8984" font-size="12">wrist</text><text x="553" y="215" fill="#8a8984" font-size="12">fingertip</text>
-            </svg>
-            <div class="game-layer">
-              <canvas id="game" aria-label="Spaceship game. The ship's height follows the finger's bend angle."></canvas>
-              <div class="game-hud"><span>Score<b id="scoreText">0</b></span><span>Best<b id="bestText">0</b></span></div>
-              <div class="game-overlay" id="gameOverlay"><strong id="overlayTitle">Spaceship game</strong><span id="overlayText"></span></div>
-            </div>
-            <div class="angle-badge"><small id="angleLabel">Live bend angle</small><strong><span id="angleReadout">0</span>°</strong></div>
-            <div class="stage-legend"><span><i class="legend-line"></i> optical sleeve signal</span><span><i class="legend-dash"></i> neutral alignment</span></div>
-          </div>
-          <div class="metrics">
-            <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="lossReadout">0.00</span> <small>dB</small></div></div>
-            <div class="metric"><div class="metric-label">Bending angle</div><div class="metric-value"><span id="metricAngle">0</span> <small>deg</small></div></div>
-            <div class="metric"><div class="metric-label">Bladder pressure</div><div class="metric-value"><span id="pressureReadout">0.0</span> <small>PSI</small></div></div>
-          </div>
-        </section>
+      <div class="side">
         <section class="panel" id="hardware">
-          <div class="panel-head"><h2>Controls</h2><span id="inputMode">Simulator</span></div>
+          <div class="panel-head"><h2>Controls</h2><span class="actuator">Actuator <b id="actuatorText">Vented</b></span></div>
           <div class="controls">
-            <div class="control-group full mode-panel" data-panel="auto">
-              <div class="control-title"><label>Automatic cycle</label><b id="autoStatus">Ready</b></div>
+            <div class="control-group mode-panel" data-panel="auto">
+              <div class="control-title"><span class="group-label">Automatic cycle <button class="info-btn" type="button" aria-label="About the automatic cycle">i</button><span class="info-text" hidden>Each rep inflates, holds, vents and rests for these times. Inflation still stops at the pressure limit in <code>src/main.cpp</code>. Pressing the FSR vents straight away and ends the cycle.</span></span><b id="autoStatus">Ready</b></div>
               <div class="timings">
                 <label>Inflate (s)<input id="autoInflate" type="number" min="0.5" max="60" step="0.5" value="3"></label>
                 <label>Hold (s)<input id="autoHold" type="number" min="0" max="60" step="0.5" value="2"></label>
@@ -256,74 +249,67 @@
               </div>
               <div class="progress" aria-hidden="true"><i id="autoProgress"></i></div>
               <div class="button-row"><button id="autoStartBtn" type="button">Start</button><button class="secondary" id="autoStopBtn" type="button" disabled>Stop and vent</button></div>
-              <p class="hint">Each rep inflates, holds, vents and rests for these times. Inflation still stops at the pressure limit in <code>src/main.cpp</code>. Pressing the FSR vents straight away and ends the cycle.</p>
             </div>
-            <div class="control-group full mode-panel" data-panel="manual" hidden>
-              <div class="control-title"><label>Manual control</label><b id="manualStatus">No key held</b></div>
+            <div class="control-group mode-panel" data-panel="manual" hidden>
+              <div class="control-title"><span class="group-label">Manual control <button class="info-btn" type="button" aria-label="About manual control">i</button><span class="info-text" hidden>The buttons work like the arrow keys: press and hold. Bend runs the pump and Straighten opens the exhaust. Inflation stops at the pressure limit in <code>src/main.cpp</code>, and pressing the FSR vents straight away.</span></span><b id="manualStatus">No key held</b></div>
               <p class="lead">Hold <kbd>↑</kbd> to bend the finger and <kbd>↓</kbd> to straighten it. Let go to hold the position.</p>
               <div class="button-row"><button class="secondary hold-btn" id="bendBtn" type="button">▲ Bend</button><button class="secondary hold-btn" id="straightenBtn" type="button">▼ Straighten</button></div>
-              <p class="hint">The buttons work the same way: press and hold. Bend runs the pump and Straighten opens the exhaust. Inflation stops at the pressure limit in <code>src/main.cpp</code>, and pressing the FSR vents straight away.</p>
             </div>
-            <div class="control-group full mode-panel" data-panel="game" hidden>
-              <div class="control-title"><label>Spaceship game</label><b id="gameStatus">Ready</b></div>
-              <p class="lead">Bend your finger to fly up and straighten it to fly down. Dodge the asteroids.</p>
+            <div class="control-group mode-panel" data-panel="game" hidden>
+              <div class="control-title"><span class="group-label">Spaceship game <button class="info-btn" type="button" aria-label="About the game">i</button><span class="info-text" hidden>Bend your finger to fly up and straighten it to fly down, and dodge the asteroids. The bladder stays vented, so the finger moves under its own effort. <kbd>Space</kbd> also starts the game. Without an Arduino, hold <kbd>↑</kbd> and <kbd>↓</kbd> to move the simulated finger.</span></span><b id="gameStatus">Ready</b></div>
               <div class="source-row"><label>Top of screen at (deg)<input id="gameTopAngle" type="number" min="10" max="120" step="5" value="90"></label><button id="gameStartBtn" type="button">Start game</button></div>
-              <p class="hint">The bladder stays vented, so the finger moves under its own effort. <kbd>Space</kbd> also starts the game. Without an Arduino, hold <kbd>↑</kbd> and <kbd>↓</kbd> to move the simulated finger.</p>
             </div>
-            <div class="control-group full"><label>Simulator model</label>
+            <details class="control-group sim-settings" id="simSettings">
+              <summary>Simulator settings <button class="info-btn" type="button" aria-label="About the simulator">i</button><span class="info-text" hidden>Without an Arduino, a simulated bladder answers the same commands as the real one. It fills at 0.8 psi/s up to 3 psi and bends the finger 30° per psi, and its loss is <code>L = L₀ + k (θ − θ₀)</code>. With the Arduino connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead. Make that fit on the <a href="#calibration">Calibration</a> page.</span></summary>
               <div class="calibration"><label>Baseline loss (dB)<input id="baseInput" type="number" step=".01" value="0.50"></label><label>Sensitivity (dB/deg)<input id="sensitivityInput" type="number" step=".001" value=".055"></label><label>Neutral angle (deg)<input id="neutralInput" type="number" step="1" value="0"></label></div>
-              <p class="hint">Without an Arduino, a simulated bladder answers the same commands as the real one. It fills at 0.8 psi/s up to 3 psi and bends the finger 30° per psi, and its loss is <code>L = L₀ + k (θ − θ₀)</code>. With the Arduino connected, the angle comes from the calibration fit in <code>src/main.cpp</code> instead. Make that fit on the <a href="#calibration">Calibration</a> page.</p>
-            </div>
-            <div class="control-group full"><label for="connectBtn">Arduino over USB</label>
-              <div class="button-row"><button class="connect-btn" id="connectBtn" type="button">Connect to Arduino</button><span class="hint serial-status"></span></div>
-              <p class="hint">Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the optical and pressure baselines, so keep the finger straight. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</p>
-            </div>
-            <div class="control-group full"><label for="trialInput">Recording</label>
-              <div class="source-row"><input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3, 50% grip"><button id="downloadBtn" type="button" disabled>Download CSV</button></div>
-              <p class="hint" id="recordStatus">Records everything the Arduino sends, from Connect to Disconnect. The trial name goes in the file name and in every row.</p>
-            </div>
+            </details>
           </div>
         </section>
         <section class="panel chart-panel" id="trends">
-          <div class="panel-head"><h2>Live sensor trends</h2><span>Last 30 seconds · <span id="sampleRate">10 Hz</span></span></div>
-          <div class="chart-wrap"><svg id="chart" viewBox="0 0 900 242" preserveAspectRatio="none" aria-label="Live sensor trend chart"></svg></div>
+          <div class="panel-head"><h2>Live sensor trends</h2><span class="chart-legend"><span><i style="background: var(--angle)"></i>Angle (°)</span><span><i style="background: var(--loss)"></i>Loss (dB)</span><span><i style="background: var(--pressure)"></i>Pressure (PSI)</span></span></div>
+          <div class="chart-wrap"><svg id="chart" role="img" aria-label="Live sensor trend chart"></svg></div>
         </section>
-      </section>
-      <section class="cal-layout" id="calibration" hidden>
+      </div>
+    </section>
+    <section class="cal-layout" id="calibration" hidden>
+      <div class="cal-col">
         <section class="panel cal-capture">
-          <div class="panel-head"><h2>Capture points</h2><span id="calInput">Arduino not connected</span></div>
+          <div class="panel-head"><h2>Capture points <button class="info-btn" type="button" aria-label="How to calibrate">i</button><span class="info-text" hidden>
+            <span class="p">Fit the bend angle to the optical loss, then paste the result into the sketch.</span>
+            <span class="p">1. Connect with the finger straight and the bladder empty. The sketch zeros the optical loss as it starts.</span>
+            <span class="p">2. Capture 0° first. Then bend the finger to angles across the range you'll use, by hand or with Inflate and Hold.</span>
+            <span class="p">3. At each bend, measure the angle with a protractor, type it in and press Capture. Hold still while it averages.</span>
+            <span class="p">4. 6 to 10 points spread over the range is plenty. Capturing 0° again at the end shows whether the reading drifted.</span>
+            <span class="p">5. Copy the coefficients into <code>src/main.cpp</code> and upload.</span>
+          </span></h2><span id="calInput">Arduino not connected</span></div>
           <div class="controls">
-            <div class="control-group full"><label>How to calibrate</label>
-              <ol class="steps">
-                <li>Connect with the finger straight and the bladder empty. The sketch zeros the optical loss as it starts.</li>
-                <li>Capture 0° first. Then bend the finger to angles across the range you'll use, by hand or with Inflate and Hold.</li>
-                <li>At each bend, measure the angle with a protractor, type it in and press Capture. Hold still while it averages.</li>
-                <li>6 to 10 points spread over the range is plenty. Capturing 0° again at the end shows whether the reading drifted.</li>
-                <li>Copy the coefficients into <code>src/main.cpp</code> and upload.</li>
-              </ol>
+            <div class="control-group"><span class="group-label">Bladder</span>
+              <div class="button-row"><button class="secondary" data-command="I" type="button" disabled>Inflate</button><button class="secondary" data-command="H" type="button" disabled>Hold</button><button class="secondary" data-command="V" type="button" disabled>Vent</button></div>
             </div>
-            <div class="control-group full"><label>Arduino over USB</label>
-              <div class="button-row"><button class="connect-btn">Connect to Arduino</button><span class="hint serial-status"></span></div>
-              <div class="button-row"><button class="secondary" data-command="I" disabled>Inflate</button><button class="secondary" data-command="H" disabled>Hold</button><button class="secondary" data-command="V" disabled>Vent</button><span class="hint control-mode"></span></div>
-            </div>
-            <div class="control-group full"><label>Live reading</label>
+            <div class="control-group"><span class="group-label">Live reading <button class="info-btn" type="button" aria-label="About the live reading">i</button><span class="info-text" hidden>Sketch angle uses the constants in <code>src/main.cpp</code> now. New fit angle uses your captured points.</span></span>
               <div class="live-row">
                 <div class="metric"><div class="metric-label">Optical loss</div><div class="metric-value"><span id="calLoss">--</span> <small>dB</small></div></div>
                 <div class="metric"><div class="metric-label">Sketch angle</div><div class="metric-value"><span id="calSketchAngle">--</span> <small>deg</small></div></div>
                 <div class="metric"><div class="metric-label">New fit angle</div><div class="metric-value"><span id="calFitAngle">--</span> <small>deg</small></div></div>
               </div>
-              <p class="hint" id="calRangeHint"></p>
+              <p class="hint warn" id="calRangeHint"></p>
             </div>
-            <div class="control-group full">
+            <div class="control-group">
               <div class="capture-row">
                 <label>Measured angle (°)<input id="calAngleInput" type="number" step="0.5" placeholder="e.g. 45"></label>
                 <label>Average over<select id="calRowsSelect"><option value="5">5 rows, about 1 s</option><option value="10" selected>10 rows, about 2 s</option><option value="25">25 rows, about 5 s</option></select></label>
-                <button id="captureBtn" disabled>Capture</button>
+                <button id="captureBtn" type="button" disabled>Capture</button>
               </div>
               <p class="hint" id="captureStatus">Connect to the Arduino to capture points.</p>
             </div>
           </div>
         </section>
+        <section class="panel cal-code">
+          <div class="panel-head"><h2>Paste into src/main.cpp <button class="info-btn" type="button" aria-label="How to apply the fit">i</button><span class="info-text" hidden>In <code>src/main.cpp</code>, replace the lines from <code>// Angle calibration</code> down to <code>ANGLE_C</code> with this block, then run <code>pio run -t upload</code>. The dashboard needs no change.</span></h2><button class="secondary" id="copyBtn" type="button" disabled>Copy</button></div>
+          <div class="panel-body"><pre class="snippet" id="snippet"></pre></div>
+        </section>
+      </div>
+      <div class="cal-col">
         <section class="panel cal-fit">
           <div class="panel-head"><h2>Angle against optical loss</h2><span id="fitEquation">No fit yet</span></div>
           <div class="fit-legend"><span><i class="key-dot"></i> Measured points</span><span><i class="legend-line"></i> New fit</span><span><i class="key-dash"></i> Current sketch</span><span><i class="key-live"></i> Live loss</span><span><i class="key-hollow"></i> Left out</span></div>
@@ -341,31 +327,24 @@
           <ul class="warnings" id="fitWarnings"></ul>
         </section>
         <section class="panel cal-points">
-          <div class="panel-head"><h2>Calibration points</h2><span id="pointCount">None yet</span></div>
+          <div class="panel-head"><h2>Calibration points <button class="info-btn" type="button" aria-label="About the points">i</button><span class="info-text" hidden>Spread is the standard deviation of the loss while it averaged. Untick a point to leave it out of the fit. Points stay in this browser until you clear them.</span></h2><span id="pointCount">None yet</span></div>
           <div class="table-wrap"><table>
             <thead><tr><th>Use · #</th><th>Measured (°)</th><th>Loss (dB)</th><th>Spread (dB)</th><th>Sketch (°)</th><th>New fit (°)</th><th>Error (°)</th><th><span class="sr-only">Remove</span></th></tr></thead>
             <tbody id="pointRows"></tbody>
           </table></div>
           <div class="panel-foot">
-            <div class="button-row"><button class="secondary" id="exportPointsBtn" disabled>Download points CSV</button><button class="secondary" id="clearPointsBtn" disabled>Clear all</button></div>
-            <p class="hint">Spread is the standard deviation of the loss while it averaged. Untick a point to leave it out of the fit. Points stay in this browser until you clear them.</p>
+            <div class="button-row"><button class="secondary" id="exportPointsBtn" type="button" disabled>Download points CSV</button><button class="secondary" id="clearPointsBtn" type="button" disabled>Clear all</button></div>
           </div>
         </section>
-        <section class="panel cal-code">
-          <div class="panel-head"><h2>Paste into src/main.cpp</h2><button class="secondary" id="copyBtn" disabled>Copy</button></div>
-          <div class="panel-body">
-            <pre class="snippet" id="snippet"></pre>
-            <p class="hint">In <code>src/main.cpp</code>, replace the lines from <code>// Angle calibration</code> down to <code>ANGLE_C</code> with this block, then run <code>pio run -t upload</code>. The dashboard needs no change.</p>
-          </div>
-        </section>
-      </section>
-    </main>
-  </div>
+      </div>
+    </section>
+  </main>
+  <div class="info-pop" id="infoPop" hidden></div>
   <script>
     const $ = id => document.getElementById(id);
     const all = selector => document.querySelectorAll(selector);
-    const state = { angle: 0, pressure: 0, loss: 0, connected: false, ready: false, arduinoMode: '', started: Date.now(), history: [] };
-    const MAX_SAMPLES = 120;
+    const state = { angle: 0, pressure: 0, loss: 0, connected: false, ready: false, arduinoMode: '', history: [] };
+    const CHART_WINDOW_S = 20;  // the trend chart shows the last 20 seconds
     const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
     const setText = (id, text) => { if ($(id).textContent !== String(text)) $(id).textContent = text; };
 
@@ -386,7 +365,7 @@
       if (Number.isFinite(next.pressure)) state.pressure = clamp(next.pressure, 0, 30);
       if (Number.isFinite(next.loss)) state.loss = Math.max(0, next.loss);
       else if (!fromHardware) state.loss = lossFromAngle(state.angle);  // don't invent a measured loss for hardware rows
-      setText('angleReadout', Math.round(state.angle)); setText('metricAngle', Math.round(state.angle));
+      setText('angleReadout', Math.round(state.angle));
       setText('pressureReadout', state.pressure.toFixed(1)); setText('lossReadout', state.loss.toFixed(2));
       drawFinger(state.angle); addSample();
     }
@@ -412,23 +391,36 @@
       $('arcLabel').setAttribute('x', p1.x + 12); $('arcLabel').setAttribute('y', p1.y - 47); $('arcLabel').textContent = `${Math.round(angle)}°`;
     }
     function addSample() {
-      state.history.push({ angle: state.angle, loss: state.loss, pressure: state.pressure });
-      if (state.history.length > MAX_SAMPLES) state.history.shift();
-      drawChart();
+      const now = performance.now();
+      state.history.push({ t: now, angle: state.angle, loss: state.loss, pressure: state.pressure });
+      while (now - state.history[0].t > (CHART_WINDOW_S + 1) * 1000) state.history.shift();  // keep one just off the left edge
+      drawChart(now);
     }
-    function drawChart() {
-      const chart = $('chart'), W = 900, H = 242, pad = {l: 43, r: 12, t: 17, b: 28};
-      const plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
-      let html = '';
-      [0, .25, .5, .75, 1].forEach(t => { const y = pad.t + t*plotH; html += `<line class="gridline" x1="${pad.l}" x2="${W-pad.r}" y1="${y}" y2="${y}"/><text class="axis-label" x="5" y="${y+4}">${Math.round(120-t*120)}°</text>`; });
-      html += `<text class="axis-label" x="${pad.l}" y="${H-5}">30 sec ago</text><text class="axis-label" x="${W-60}" y="${H-5}">now</text>`;
+    // Drawn in real pixels so the text isn't stretched. Samples are placed by when they arrived.
+    function drawChart(now = performance.now()) {
+      const chart = $('chart'), W = Math.round(chart.clientWidth), H = Math.round(chart.clientHeight);
+      if (!W || !H) return;  // the live view is hidden
+      const pad = {l: 40, r: 8, t: 8, b: 24}, plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
+      const x = t => pad.l + (1 - (now - t) / (CHART_WINDOW_S * 1000)) * plotW;
+      let html = `<defs><clipPath id="chartClip"><rect x="${pad.l}" y="0" width="${plotW}" height="${H}"/></clipPath></defs>`;
+      [0, .25, .5, .75, 1].forEach(t => { const y = pad.t + t*plotH; html += `<line class="gridline" x1="${pad.l}" x2="${W-pad.r}" y1="${y}" y2="${y}"/><text class="axis-label" x="${pad.l-8}" y="${y+4}" text-anchor="end">${Math.round(120-t*120)}°</text>`; });
+      html += `<text class="axis-label" x="${pad.l}" y="${H-5}">${CHART_WINDOW_S} s ago</text><text class="axis-label" x="${W-pad.r}" y="${H-5}" text-anchor="end">now</text><g clip-path="url(#chartClip)">`;
       const series = [{key:'angle', color:'#2a78d6', max:120}, {key:'loss', color:'#1baf7a', max:8}, {key:'pressure', color:'#eb6834', max:24}];
-      series.forEach(s => { const points = state.history.map((v,i) => `${pad.l + (state.history.length < 2 ? 0 : i/(MAX_SAMPLES-1)*plotW)},${pad.t+plotH-clamp(v[s.key]/s.max,0,1)*plotH}`).join(' '); html += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`; });
-      html += `<g transform="translate(${W-310},8)"><line x1="0" x2="18" y1="4" y2="4" stroke="#2a78d6" stroke-width="3"/><text class="axis-label" x="24" y="8">Angle (°)</text><line x1="83" x2="101" y1="4" y2="4" stroke="#1baf7a" stroke-width="3"/><text class="axis-label" x="107" y="8">Loss (dB)</text><line x1="174" x2="192" y1="4" y2="4" stroke="#eb6834" stroke-width="3"/><text class="axis-label" x="198" y="8">Pressure (PSI)</text></g>`;
-      chart.innerHTML = html;
+      series.forEach(s => { const points = state.history.map(v => `${x(v.t).toFixed(1)},${(pad.t+plotH-clamp(v[s.key]/s.max,0,1)*plotH).toFixed(1)}`).join(' '); html += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`; });
+      chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      chart.innerHTML = html + '</g>';
     }
+    // The top bar's status: simulator or Arduino, and how long the recording is.
     function showStatus() {
-      $('status').innerHTML = `<i class="dot"></i><span>${state.connected ? 'Arduino connected' : 'Simulator'}</span>`;
+      const rows = recording ? recording.rows.length : 0, seconds = rows ? Math.floor(recording.rows[rows - 1].seconds) : 0;
+      const length = `${Math.floor(seconds / 60)}:${pad(seconds % 60)}`;
+      let html = 'Simulator';
+      if (state.connected) html = rows ? `Arduino · recording ${length}` : 'Arduino · starting up';
+      else if (rows) html = `Simulator · recorded ${length}, ${unsavedRows() ? '<span class="warn">not downloaded</span>' : 'downloaded'}`;
+      if ($('statusText').innerHTML !== html) $('statusText').innerHTML = html;
+      $('status').title = rows ? `${rows} rows recorded` : '';
+      $('statusDot').classList.toggle('live', state.connected);
+      $('simSettings').hidden = state.connected;  // the simulator only runs without an Arduino
     }
 
     // Pump commands. The sketch takes single characters: I inflate, H hold, V vent,
@@ -452,7 +444,6 @@
     // The calibration view's Inflate, Hold and Vent buttons. Each one's data-command is the character it sends.
     const CONTROL_BUTTONS = { I: 'INFL', H: 'HOLD', V: 'VENT' };  // command -> Mode label it lights up for
     function showArduinoMode(mode) {
-      all('.control-mode').forEach(el => { el.textContent = mode ? (MODE_TEXT[mode] || mode) : ''; });
       all('[data-command]').forEach(button => button.classList.toggle('active', mode === CONTROL_BUTTONS[button.dataset.command]));
     }
     function enableControls(enabled) {
@@ -464,7 +455,7 @@
       const mode = state.connected ? state.arduinoMode : sim.mode;
       const text = !mode ? 'Starting up' : mode === 'VENT' && state.pressure < .05 ? 'Vented' : MODE_TEXT[mode] || mode;
       setText('actuatorText', text);
-      setText('actuatorSource', state.connected ? 'Arduino' : 'simulated');
+      setText('calInput', state.connected ? `Actuator · ${text}` : 'Arduino not connected');  // calibration needs the real one
     }
 
     // Simulator: a bladder that answers I, H and V like the sketch does. In the
@@ -513,9 +504,7 @@
       const gameOn = next === 'game';
       $('stage').classList.toggle('game-on', gameOn);
       $('stageTitle').textContent = gameOn ? 'Spaceship game' : 'Articulated finger';
-      $('stageNote').textContent = gameOn ? 'Bend to fly up · straighten to fly down' : 'Right index · calibrated';
-      $('angleLabel').textContent = gameOn ? 'Angle' : 'Live bend angle';
-      $('exerciseName').textContent = EXERCISE_NAMES[next];
+      $('angleLabel').textContent = gameOn ? 'Angle' : 'Bend angle';
       runGameLoop(gameOn);
       refreshControls();
     }
@@ -797,18 +786,10 @@
     let columns = DEFAULT_COLUMNS, serialReader = null;
     let userDisconnect = false;  // set when Disconnect is clicked, so any other end of the connection reads as lost
 
-    // The live and calibration views each have a Connect button, a status line and
-    // pump buttons, all driven together through these classes.
-    const showSerialStatus = text => all('.serial-status').forEach(el => { el.textContent = text; });
-    function setConnectButtons({ text, disabled }) {
-      all('.connect-btn').forEach(button => {
-        if (text !== undefined) button.textContent = text;
-        if (disabled !== undefined) button.disabled = disabled;
-      });
-    }
-    function showInputMode(live, calibration = live) {
-      $('inputMode').textContent = live;
-      $('calInput').textContent = calibration;
+    // The line under the top bar: the sketch's startup messages and connection problems.
+    function showSerialStatus(text, warn = false) {
+      setText('serialStatus', text);
+      $('serialStatus').classList.toggle('warn', warn);
     }
 
     // Recording: every data row from Connect to Disconnect, downloadable as CSV.
@@ -841,13 +822,8 @@
       showRecording();
     }
     function showRecording() {
-      const rows = recording ? recording.rows.length : 0;
-      $('downloadBtn').disabled = rows === 0;
-      if (!recording) return;
-      const seconds = rows ? Math.floor(recording.rows[rows - 1].seconds) : 0;
-      const length = `${rows} rows · ${Math.floor(seconds / 60)}:${pad(seconds % 60)}`;
-      const saved = !rows || (state.connected && unsavedRows()) ? '' : unsavedRows() ? ' · not downloaded yet' : ' · downloaded';
-      $('recordStatus').textContent = `${state.connected ? 'Recording' : 'Stopped'} · ${length}${saved}`;
+      $('downloadBtn').disabled = !recording || !recording.rows.length;
+      showStatus();
     }
     function downloadRecording() {
       const trial = $('trialInput').value.trim();
@@ -896,7 +872,6 @@
       stepAuto(now);
       recordRow(cells);
       setData({ angle: row.angle, loss: row.loss, pressure: row.pressure }, true);
-      showInputMode('Arduino · live');
       showArduinoMode(mode);
       enableControls(true);  // only once the sketch has finished its startup vent
       calibrationRow(row);
@@ -905,19 +880,19 @@
     }
 
     async function connectArduino() {
-      if (!('serial' in navigator)) { showSerialStatus('This browser has no Web Serial. Use Chrome, Edge or Firefox 151 or later.'); return; }
+      if (!('serial' in navigator)) { showSerialStatus('This browser has no Web Serial. Use Chrome, Edge or Firefox 151 or later.', true); return; }
       const unsaved = unsavedRows();
       if (unsaved && !confirm(`The last recording has ${unsaved} rows that haven't been downloaded. Discard them and start a new recording?`)) return;
       let port;
-      setConnectButtons({ disabled: true });
+      $('connectBtn').disabled = true;
       try {
         port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
       } catch (err) {
-        showSerialStatus(err.name === 'NotFoundError' ? 'No port selected.' : `Could not open the port: ${err.message}`);
+        if (err.name === 'NotFoundError') showSerialStatus('No port selected.'); else showSerialStatus(`Could not open the port: ${err.message}`, true);
         return;
       } finally {
-        setConnectButtons({ disabled: false });
+        $('connectBtn').disabled = false;
       }
       // Stop whatever the simulator was doing; nothing is sent until the sketch's first data row.
       stopAuto('Stopped: connected to the Arduino');
@@ -930,8 +905,7 @@
       startRecording();
       Object.assign(state, { connected: true, ready: false, arduinoMode: '' });
       showStatus(); showActuator(); refreshControls();
-      setConnectButtons({ text: 'Disconnect' });
-      showInputMode('Arduino · waiting for data');
+      $('connectBtn').textContent = 'Disconnect';
       showSerialStatus('');
       startCalibrationInput();
       userDisconnect = false;
@@ -941,7 +915,7 @@
           const { value, done } = await serialReader.read();
           if (done) {
             // Chrome reports a pulled cable as an error (caught below). Firefox just ends the stream.
-            if (!userDisconnect) showSerialStatus('Connection lost: The Arduino was disconnected.');
+            if (!userDisconnect) showSerialStatus('Connection lost: The Arduino was disconnected.', true);
             break;
           }
           buffer += value;
@@ -950,7 +924,7 @@
           lines.forEach(handleSerialLine);
         }
       } catch (err) {
-        showSerialStatus(`Connection lost: ${err.message}`);
+        showSerialStatus(`Connection lost: ${err.message}`, true);
       } finally {
         serialReader.releaseLock();
         serialReader = null;
@@ -970,17 +944,17 @@
         state.connected = false;
         Object.assign(sim, { mode: 'VENT', pressure: state.pressure, angle: state.angle, lastMs: performance.now() });  // relax from the last real reading
         showRecording(); showStatus(); showActuator(); refreshControls();
-        setConnectButtons({ text: 'Connect to Arduino' });
-        showInputMode('Simulator', 'Arduino not connected');
+        $('connectBtn').textContent = 'Connect to Arduino';
+        if (userDisconnect) showSerialStatus('');  // the sketch's last message no longer applies
       }
     }
 
     // Cancelling the reader ends the read loop above, which closes the port.
-    all('.connect-btn').forEach(button => button.addEventListener('click', () => {
+    $('connectBtn').addEventListener('click', () => {
       if (!serialReader) return connectArduino();
       userDisconnect = true;
       serialReader.cancel();
-    }));
+    });
 
     // Calibration view. Each point pairs an angle measured with a protractor with the
     // sketch's Loss(dB) averaged over the next few rows. A least-squares fit of
@@ -1121,7 +1095,7 @@
       const outside = fit && Number.isFinite(loss) && (loss < fit.minLoss - .005 || loss > fit.maxLoss + .005);
       $('calRangeHint').textContent = outside
         ? `The live loss is outside the captured range (${fit.minLoss.toFixed(2)} to ${fit.maxLoss.toFixed(2)} dB), so the new fit is guessing here.`
-        : 'Sketch angle uses the constants in src/main.cpp now. New fit angle uses your captured points.';
+        : '';  // the (i) by Live reading explains the two angles
       $('calRangeHint').classList.toggle('warn', Boolean(outside));
     }
     function setCaptureStatus(text, warn = false) {
@@ -1309,7 +1283,8 @@
 
     // Views: #calibration shows the calibration view, anything else the live session.
     function showView() {
-      const calibrating = location.hash === '#calibration', trends = location.hash === '#trends';
+      const calibrating = location.hash === '#calibration';
+      hideInfo();
       $('liveView').hidden = $('modeBar').hidden = calibrating;
       $('calibration').hidden = !calibrating;
       // Capturing needs a still finger, so the exercise modes stop while the calibration view is open.
@@ -1319,22 +1294,82 @@
         if (game.status === 'playing') resetGame();
       }
       runGameLoop(!calibrating && exercise === 'game');
-      $('viewTitle').textContent = calibrating ? 'Calibration' : 'Live session';
-      $('viewSubtitle').textContent = calibrating ? 'Fit the bend angle to the optical loss, then paste the result into the sketch' : 'Optical finger-sleeve feedback for guided rehab exercises';
-      const current = calibrating ? '#calibration' : trends ? '#trends' : '#overview';
-      all('#sideNav a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === current));
-      all('.view-tabs a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === (calibrating ? '#calibration' : '#overview')));
-      if (trends) $('trends').scrollIntoView(); else window.scrollTo(0, 0);
-      if (calibrating) drawFitChart();
+      all('.view-tabs a').forEach(a => {
+        const current = a.getAttribute('href') === (calibrating ? '#calibration' : '#overview');
+        a.classList.toggle('active', current);
+        if (current) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+      window.scrollTo(0, 0);
+      if (calibrating) drawFitChart(); else drawChart();
     }
     window.addEventListener('hashchange', showView);
-    window.addEventListener('resize', () => { if (!$('calibration').hidden) drawFitChart(); });
+    window.addEventListener('resize', () => { if (!$('calibration').hidden) drawFitChart(); else drawChart(); });
+
+    // Info buttons: each (i) shows the hidden .info-text after it in the shared popup.
+    // Hovering shows it, and a click or tap keeps it open until you click elsewhere or press Escape.
+    const infoPop = $('infoPop');
+    let infoButton = null, infoPinned = false, infoTimer = 0;
+    function showInfo(button, pin) {
+      clearTimeout(infoTimer);
+      if (infoButton !== button) {
+        hideInfo();
+        infoButton = button;
+        infoPop.innerHTML = button.nextElementSibling.innerHTML;
+      }
+      infoPinned = infoPinned || pin;
+      button.setAttribute('aria-expanded', 'true');
+      infoPop.hidden = false;
+      placeInfo();
+    }
+    function hideInfo() {
+      clearTimeout(infoTimer);
+      if (!infoButton) return;
+      infoButton.setAttribute('aria-expanded', 'false');
+      infoButton = null;
+      infoPinned = false;
+      infoPop.hidden = true;
+    }
+    function leaveInfo(event) {  // a short delay lets the pointer cross the gap into the popup
+      if (event.pointerType !== 'mouse' || infoPinned) return;
+      clearTimeout(infoTimer);
+      infoTimer = setTimeout(hideInfo, 150);
+    }
+    function placeInfo() {  // below the button, or above it if there's no room, and inside the window
+      if (!infoButton) return;
+      const b = infoButton.getBoundingClientRect(), margin = 12;
+      if (!b.width) { hideInfo(); return; }  // its view was hidden
+      const w = infoPop.offsetWidth, h = infoPop.offsetHeight;
+      const below = b.bottom + 6, above = b.top - 6 - h;
+      infoPop.style.left = `${clamp(b.left - 12, margin, innerWidth - w - margin)}px`;
+      infoPop.style.top = `${below + h > innerHeight - margin && above > margin ? above : below}px`;
+    }
+    all('.info-btn').forEach((button, i) => {
+      const text = button.nextElementSibling;
+      text.id = `infoText${i}`;
+      button.setAttribute('aria-describedby', text.id);  // screen readers read the hidden text as the description
+      button.setAttribute('aria-controls', 'infoPop');
+      button.setAttribute('aria-expanded', 'false');
+      button.addEventListener('click', event => {
+        event.preventDefault();  // one inside <summary> mustn't open or close the section
+        if (infoButton === button && infoPinned) hideInfo(); else showInfo(button, true);
+      });
+      button.addEventListener('pointerenter', event => {
+        if (event.pointerType === 'mouse' && !(infoPinned && infoButton !== button)) showInfo(button, false);
+      });
+      button.addEventListener('pointerleave', leaveInfo);
+    });
+    infoPop.addEventListener('pointerenter', () => clearTimeout(infoTimer));
+    infoPop.addEventListener('pointerleave', leaveInfo);
+    document.addEventListener('pointerdown', event => {
+      if (infoButton && !infoPop.contains(event.target) && !infoButton.contains(event.target)) hideInfo();
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') hideInfo(); });
+    window.addEventListener('scroll', placeInfo, { capture: true, passive: true });
+    window.addEventListener('resize', placeInfo);
 
     function tick() {
       if (!state.connected) simStep();
       stepAuto(performance.now());
-      const elapsed = Math.floor((Date.now()-state.started)/1000);
-      setText('duration', `${pad(Math.floor(elapsed/60))}:${pad(elapsed%60)}`);
     }
 
     // Restore this browser's settings, then start.

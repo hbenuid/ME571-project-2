@@ -128,28 +128,38 @@ On Connect, Chrome and Edge open a port chooser. Firefox shows a popup, "Allow t
 ports?", with a "Select a serial port:" dropdown and **Allow** / **Block**. Pick the Uno (`usbmodem…`) and click
 Allow. Cancelling Chrome's chooser, or Block in Firefox, shows "No port selected."
 
-The page has two views: **Live session** (the default) and **Calibration** (`#calibration`). The sidebar links, or the
-tabs at the top on narrow screens, switch between them and highlight the current one. Both views share one serial
-connection and recording. Each has its own Connect button, and they act on the same port. The live session drives
-the bladder through the exercise modes below. The calibration view has its own Inflate, Hold and Vent buttons for
-setting a bend. Opening the calibration view stops the automatic cycle, releases held keys and ends a game, because
-a capture needs a still finger.
+The page has two views: **Live session** (the default) and **Calibration** (`#calibration`). A top bar, shared by
+both, holds the FlexSense name, the two view tabs (the current one highlighted), the status, the one **Connect to
+Arduino** button, the Trial name box and **Download CSV**. Both views share one serial connection and recording. The
+status reads `Simulator`, `Arduino · starting up` (connected, before the first data row), `Arduino · recording
+m:ss`, or after a disconnect `Simulator · recorded m:ss, not downloaded` (amber) or `…, downloaded`. Its tooltip
+counts the rows. The sketch's startup messages and connection problems appear on a line under the top bar. The
+live session drives the bladder through the exercise modes below. The calibration view has its own Inflate, Hold and
+Vent buttons for setting a bend. Opening the calibration view stops the automatic cycle, releases held keys and ends
+a game, because a capture needs a still finger.
+
+Explanations stay out of sight behind small **(i)** buttons next to headings and the top bar. Each `.info-btn` shows
+the hidden `.info-text` right after it in one shared popup (`#infoPop`): hovering shows it, a click or tap keeps it
+open until a click elsewhere or Escape, and changing view closes it. The popup stays inside the window. Only
+short labels, live status and warnings stay on the page. To add an explanation, add a button and text in the same
+way.
 
 ### Look
 
 A plain light theme: off-white page, white panels with thin grey borders, the system font and one blue accent, with
-no gradients, glows or shadows. There is no dark mode. The page colours are CSS variables in `:root`. The SVG finger,
+no gradients, glows or shadows. There is no dark mode and no sidebar. The page colours are CSS variables in `:root`. The SVG finger,
 the trend chart, the game and the calibration plot use hex values written into the markup, `drawChart()`,
 `drawGame()` and `drawFitChart()`, so change those by hand to match. Each quantity keeps one colour everywhere: angle
 `--angle` (blue), loss `--loss` (green) and pressure `--pressure` (orange), shown as a dot by each live-session
-readout and as its line on the trend chart. Readout numbers stay in the text colour. The game's ship, whose height
+readout (the large angle badge on the finger, then loss and pressure under it) and as its line on the trend chart. Readout numbers stay in the text colour. The game's ship, whose height
 is the angle, is blue too. In the calibration plot the measured points are dark, the new fit is blue, the current
 sketch is a grey dashed line and the live loss is green. Warnings use `--warn` (dark amber).
 
 ### Exercise modes
 
-Three tabs under the live session's header choose the mode. The panel next to them shows what the actuator is doing (the
-sketch's `Mode` column, or the simulator's). Switching modes stops the automatic cycle, releases any held key and
+Three tabs above the live session choose the mode. The live session puts the finger (or the game) on the left and
+the Controls panel and trend chart on the right. The Controls panel shows only the current mode's controls, and its
+heading says what the actuator is doing (the sketch's `Mode` column, or the simulator's). Switching modes stops the automatic cycle, releases any held key and
 vents the bladder. It doesn't vent if the sketch is still in `FSR` mode and the page never took control.
 
 | Mode | What it does | Commands |
@@ -174,23 +184,24 @@ The page starts on the simulator ("Simulator" in the status pill). A simulated b
 like the sketch does. It fills at 0.8 psi/s up to 3 psi (mirroring `MAX_DASHBOARD_PSI`), vents with a 0.5 s time
 constant and bends the finger 30° per psi. So the Automatic and Manual modes can be tried without hardware. In the
 Game, the bladder stays vented and **↑**/**↓** move the simulated finger directly, standing in for the patient's
-own effort. Loss comes from the "Simulator model" fields, `L = L₀ + k(θ − θ₀)`. None of this is real data, and it is
-never recorded.
+own effort. Loss comes from the fields under **Simulator settings**, `L = L₀ + k(θ − θ₀)`. That section starts
+closed and is hidden while an Arduino is connected. None of this is real data, and it is never recorded.
 
 ### With an Arduino
 
 - **Connect to Arduino** opens the port at 115200 baud. Incoming text is split into lines on `\n` and trimmed. A line
   whose first cell is `Force(g)` is a header and sets the column order. Data rows are matched to columns **by header
   name**, so the sketch can reorder columns but can't rename them without updating the page. `DEFAULT_COLUMNS` is
-  used until a header arrives. Other lines, such as the startup messages, appear next to the Connect buttons.
+  used until a header arrives. Other lines, such as the startup messages, appear under the top bar. Clicking
+  Disconnect clears that line.
 - Each data row updates the finger, the game, the readouts and the chart (angle, loss, pressure), the actuator
-  panel and the calibration view's live reading, and is recorded. `--` values are skipped, so the last good value
+  status and the calibration view's live reading, and is recorded. `--` values are skipped, so the last good value
   stays on screen.
 - The angle readouts show the real value. Only the finger drawing is capped at 120°.
 - Connecting stops the simulator, so a dropped cable doesn't fall back to fake motion. It also stops a running
   automatic cycle. Disconnecting stops the cycle too, and the simulator carries on from the last real reading.
 - If the connection ends without Disconnect being clicked (cable pulled, board unplugged), the page shows
-  `Connection lost: …` next to the Connect buttons, stops the automatic cycle and the pump commands, and keeps the
+  `Connection lost: …` under the top bar in amber, stops the automatic cycle and the pump commands, and keeps the
   recording. Chrome reports this as a stream error with its own message. Firefox ends the stream quietly, so the
   page tracks whether Disconnect was clicked (`userDisconnect`) and otherwise shows
   `Connection lost: The Arduino was disconnected.` The sketch vents on its own 1.5 s later either way.
@@ -324,13 +335,10 @@ There are no automated tests in the repo. Changes so far have been checked like 
 - **The game is a placeholder.** It has no levels, sounds or difficulty setting, and its "Top of screen at" angle
   is only as accurate as the angle calibration. The automatic cycle is timed, not closed-loop on angle or pressure.
 - Unfixed display issues in `index.html`:
-  - The trend chart plots loss and pressure on the angle's 0–120 scale with no axes of their own. It's labelled
-    "Last 30 seconds · 10 Hz" but holds 120 samples (12 s at 10 Hz, 24 s at 5 rows/s), added per update rather than
-    per time step.
-  - In the finger drawing, the grey sleeve completely covers the skin-coloured finger, the "fingertip" label stays at
-    the straight-finger position, and the angle arc at the first knuckle shows the full angle although that joint
-    bends only 35% of it.
-  - The sidebar's patient details and the "Right index · calibrated" label are static placeholders.
+  - The trend chart plots loss (0–8 dB) and pressure (0–24 psi) on the angle's 0–120° scale with no axes of their
+    own. It shows the last 20 s (`CHART_WINDOW_S`), placing each sample by when it arrived.
+  - In the finger drawing, the grey sleeve completely covers the skin-coloured finger, and the angle arc at the first
+    knuckle shows the full angle although that joint bends only 35% of it.
 
 ## Conventions
 
