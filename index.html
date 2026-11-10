@@ -190,6 +190,7 @@
     .meter-fill { left: 0; width: 0; background: var(--ink); border-radius: 3px 0 0 3px; }
     .meter .meter-mark { top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: var(--warn); }
     .meter-scale { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .baseline-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; margin-top: 10px; }
     #dbgWarnings { border-bottom: 1px solid var(--edge); }
     #dbgWarnings:empty { display: none; }
     .debug-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 18px 0; color: var(--muted); font-size: 12px; }
@@ -203,7 +204,7 @@
     @media (max-width: 1100px) { .debug-layout { grid-template-columns: minmax(0, 1fr); } pre.serial-log { height: 360px; } }
     @media (max-width: 1100px) { .cal-layout { grid-template-columns: minmax(0, 1fr); } .cal-col { display: contents; } .cal-fit { order: 1; } .cal-points { order: 2; } .cal-code { order: 3; } }
     @media (max-width: 900px) { .topbar-inner { padding: 10px 16px; } main { padding: 16px 16px 32px; } .layout { grid-template-columns: minmax(0, 1fr); } .session-bar { width: 100%; margin-left: 0; } .serial-status { text-align: left; } }
-    @media (max-width: 520px) { .session-bar input[type=text] { flex: 1 1 140px; width: auto; min-width: 0; } .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .mode-tab { padding: 6px 8px; } .calibration { grid-template-columns: 1fr; } .finger-stage { min-height: 340px; } .angle-badge strong { font-size: 32px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats, .debug-metrics { grid-template-columns: 1fr 1fr; } .debug-metrics .metric:nth-child(3) { border-left: 0; } .debug-metrics .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .session-bar input[type=text] { flex: 1 1 140px; width: auto; min-width: 0; } .mode-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .mode-tab { padding: 6px 8px; } .calibration { grid-template-columns: 1fr; } .finger-stage { min-height: 340px; } .angle-badge strong { font-size: 32px; } .live-row .metric { padding: 2px 8px; } .live-row .metric-value { font-size: 18px; } .stats, .debug-metrics { grid-template-columns: 1fr 1fr; } .debug-metrics .metric:nth-child(3) { border-left: 0; } .debug-metrics .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .stats .metric:nth-child(3) { border-left: 0; } .stats .metric:nth-child(n+3) { border-top: 1px solid var(--edge); } .capture-row, .fit-options, .baseline-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -217,7 +218,7 @@
         <input id="trialInput" type="text" placeholder="Trial name, e.g. trial 3" aria-label="Trial name">
         <button class="secondary" id="downloadBtn" type="button" disabled>Download CSV</button>
         <button class="info-btn" type="button" aria-label="About connecting and recording">i</button><span class="info-text" hidden>
-          <span class="p"><b>Connecting.</b> Use Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the pressure, so keep the bladder empty. The optical loss uses a fixed baseline in <code>src/main.cpp</code>. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</span>
+          <span class="p"><b>Connecting.</b> Use Chrome, Edge or Firefox 151+, not Safari. Close the PlatformIO serial monitor first, since only one program can open the port. Connecting usually restarts the sketch, which vents for 5 s and re-zeros the pressure, so keep the bladder empty. The optical loss uses a fixed baseline, saved on the Arduino and set in the Debug view. If this page stops responding, the Arduino vents within 1.5 s and hands control back to the FSR.</span>
           <span class="p"><b>Recording.</b> Records everything the Arduino sends, from Connect to Disconnect. The trial name goes in the file name and in every row.</span>
         </span>
       </div>
@@ -301,7 +302,7 @@
         <section class="panel cal-capture">
           <div class="panel-head"><h2>Capture points <button class="info-btn" type="button" aria-label="How to calibrate">i</button><span class="info-text" hidden>
             <span class="p">Fit the bend angle to the optical loss, then paste the result into the sketch.</span>
-            <span class="p">1. Connect with the bladder empty. The optical loss is measured against the fixed <code>WAVEGUIDE_BASELINE</code> in <code>src/main.cpp</code>, so don't change the LED, potentiometer or wiring between capturing and using the fit.</span>
+            <span class="p">1. Connect with the bladder empty. The optical loss is measured against the baseline saved on the Arduino (set it in the Debug view), so don't change the LED, potentiometer, wiring or baseline between capturing and using the fit.</span>
             <span class="p">2. Capture 0° first. Then bend the finger to angles across the range you'll use, by hand or with Inflate and Hold.</span>
             <span class="p">3. At each bend, measure the angle with a protractor, type it in and press Capture. Hold still while it averages.</span>
             <span class="p">4. 6 to 10 points spread over the range is plenty. Capturing 0° again at the end shows whether the reading drifted.</span>
@@ -368,7 +369,7 @@
         <section class="panel">
           <div class="panel-head"><h2>Light sensor on A1 <button class="info-btn" type="button" aria-label="About the light sensor">i</button><span class="info-text" hidden>
             <span class="p">The waveguide's photodiode, read with <code>analogRead(A1)</code>: 0 to 1023 counts for 0 to 5 V. More light gives a higher reading, so bending the finger lowers it.</span>
-            <span class="p"><b>Baseline</b> is the fixed reference <code>WAVEGUIDE_BASELINE</code> in <code>src/main.cpp</code>, the straight-finger reading when the angle was calibrated. The optical loss compares every reading with it. With the finger straight the reading should be close to 100%; if not, the light level has changed and the angles are off.</span>
+            <span class="p"><b>Baseline</b> is the straight-finger reading saved on the Arduino. The optical loss compares every reading with it. With the finger straight the reading should be close to 100%; if not, the light level has changed and the angles are off until you save a new baseline below.</span>
             <span class="p"><b>0 counts</b>: no light reaches the photodiode, or it isn't wired to A1. Check that the LED is lit, the potentiometer isn't turned all the way down (0 Ω gives 0 V) and the photodiode's signal wire goes to A1.</span>
             <span class="p"><b>1023 counts</b>: the reading is at 5 V and can't show small changes. Turn the potentiometer down.</span>
             <span class="p">The shaded part of the bar, 3 to 4 V, is a good place for the straight-finger reading: fine steps, with room left below 5 V.</span>
@@ -376,12 +377,23 @@
           <div class="debug-metrics">
             <div class="metric"><div class="metric-label">Raw reading</div><div class="metric-value"><span id="dbgRaw">--</span> <small>counts</small></div></div>
             <div class="metric"><div class="metric-label">Voltage</div><div class="metric-value"><span id="dbgVolts">--</span> <small>V</small></div></div>
-            <div class="metric"><div class="metric-label">Baseline (fixed)</div><div class="metric-value"><span id="dbgBase">--</span> <small>counts</small></div></div>
+            <div class="metric"><div class="metric-label">Baseline</div><div class="metric-value"><span id="dbgBase">--</span> <small>counts</small></div></div>
             <div class="metric"><div class="metric-label">Light vs. baseline</div><div class="metric-value"><span id="dbgRatio">--</span> <small>%</small></div></div>
           </div>
           <div class="control-group"><span class="group-label">Where the reading sits, 0 to 5 V</span>
             <div class="meter" role="img" id="dbgMeter" aria-label="Raw reading on a 0 to 5 V scale"><i class="meter-band"></i><i class="meter-fill" id="dbgFill"></i><i class="meter-mark" id="dbgMark" hidden></i></div>
             <div class="meter-scale"><span>0 V</span><span>1 V</span><span>2 V</span><span>3 V</span><span>4 V</span><span>5 V</span></div>
+          </div>
+          <div class="control-group"><span class="group-label">Set the baseline <button class="info-btn" type="button" aria-label="About setting the baseline">i</button><span class="info-text" hidden>
+            <span class="p">Straighten the finger, vent the bladder and let the reading settle. Then press <b>Use current reading</b>, which fills in the average of the last 2 s, and <b>Save to Arduino</b>. You can also type a number.</span>
+            <span class="p">The Arduino keeps it through restarts and uploads. The angle constants expect a straight finger to read 0 dB, so save a new baseline with the finger straight whenever the light level changes. Calibration points captured against another baseline don't line up with new ones.</span>
+          </span></span>
+            <div class="baseline-row">
+              <label>Baseline (counts)<input id="dbgBaseInput" type="number" min="1" max="1023" step="1" placeholder="1 to 1023"></label>
+              <button class="secondary" id="useReadingBtn" type="button" disabled>Use current reading</button>
+              <button id="saveBaselineBtn" type="button" disabled>Save to Arduino</button>
+            </div>
+            <p class="hint" id="baselineStatus"></p>
           </div>
           <ul class="warnings" id="dbgWarnings"></ul>
           <div class="control-group"><span class="group-label">Bladder <button class="info-btn" type="button" aria-label="About these buttons">i</button><span class="info-text" hidden>Bend the finger to see how the reading responds. These work like the calibration view's buttons, and the sketch's pressure limit and FSR stop still apply.</span></span>
@@ -930,7 +942,8 @@
       if (cells[0] === 'Force(g)') { columns = cells; return; }
       if (cells.length !== columns.length || !Number.isFinite(parseFloat(cells[0]))) {
         const baseline = text.match(/^Waveguide baseline:\s*(\d+)/);
-        if (baseline) debug.baseline = Number(baseline[1]);
+        if (baseline) baselineLine(Number(baseline[1]), text);
+        if (text.startsWith('Baseline not changed')) baselineRefused(text);
         if (text) showSerialStatus(text);  // startup messages such as "Venting for 5 seconds..."
         return;
       }
@@ -1020,6 +1033,8 @@
         await port.close().catch(() => {});
         state.connected = false;
         debug.raw = NaN;
+        if (baselineSave) endBaselineSave('Disconnected before the Arduino confirmed. Reconnect to see which baseline it has.', true);
+        refreshBaselineControls();
         showDebug();
         Object.assign(sim, { mode: 'VENT', pressure: state.pressure, angle: state.angle, lastMs: performance.now() });  // relax from the last real reading
         showRecording(); showStatus(); showActuator(); refreshControls();
@@ -1380,11 +1395,68 @@
       $('logPauseBtn').textContent = debug.paused ? 'Resume' : 'Pause';
       showSerialLog();
     });
-    function startDebug() {  // on connect: the sketch restarts and takes a new baseline
+    function startDebug() {  // on connect: the sketch restarts and reports its baseline
       Object.assign(debug, { baseline: NaN, raw: NaN, exact: true, history: [], log: [] });
+      endBaselineSave('');
+      $('dbgBaseInput').value = '';
       showDebug();
       showSerialLog();
     }
+
+    // Setting the baseline. The sketch takes "B<counts>\n", saves it in EEPROM and answers with
+    // "Waveguide baseline: <counts> counts (<V> V), saved".
+    let baselineSave = null;  // { counts, timer } while waiting for that answer
+    function setBaselineStatus(text, warn = false) {
+      setText('baselineStatus', text);
+      $('baselineStatus').classList.toggle('warn', warn);
+    }
+    function recentRawMean() {  // the last 2 s, about 10 readings
+      const now = performance.now(), recent = debug.history.filter(s => now - s.t <= 2000 && Number.isFinite(s.raw));
+      return recent.length ? recent.reduce((sum, s) => sum + s.raw, 0) / recent.length : NaN;
+    }
+    function baselineInput() {
+      const text = $('dbgBaseInput').value.trim(), value = Number(text);
+      return text && Number.isInteger(value) && value >= 1 && value <= 1023 ? value : NaN;
+    }
+    function refreshBaselineControls() {
+      const ready = state.connected && state.ready;
+      $('useReadingBtn').disabled = !ready || !Number.isFinite(recentRawMean());
+      $('saveBaselineBtn').disabled = !ready || Boolean(baselineSave) || !Number.isFinite(baselineInput()) || baselineInput() === debug.baseline;
+    }
+    function endBaselineSave(text, warn = false) {
+      if (baselineSave) clearTimeout(baselineSave.timer);
+      baselineSave = null;
+      setBaselineStatus(text, warn);
+      refreshBaselineControls();
+    }
+    function saveBaseline() {
+      const counts = baselineInput();
+      if (!Number.isFinite(counts) || !state.ready || baselineSave) return;
+      sendCommand(`B${counts}\n`);
+      baselineSave = { counts, timer: setTimeout(() => endBaselineSave('The Arduino didn\'t confirm. Upload the current sketch, which can save a baseline.', true), 2000) };
+      setBaselineStatus(`Saving ${counts} counts…`);
+      refreshBaselineControls();
+    }
+    function baselineLine(counts, text) {  // the sketch's "Waveguide baseline: ..." line
+      debug.baseline = counts;
+      if (baselineSave && counts === baselineSave.counts && /, saved$/.test(text)) endBaselineSave(`Saved ${counts} counts. The Arduino uses it from now on, also after restarts.`);
+      if (document.activeElement !== $('dbgBaseInput') && !$('dbgBaseInput').value) $('dbgBaseInput').value = counts;
+      refreshBaselineControls();
+      if (!$('debug').hidden) showDebug();
+    }
+    function baselineRefused(text) {
+      if (baselineSave) endBaselineSave(text, true);
+    }
+    $('useReadingBtn').addEventListener('click', () => {
+      const mean = recentRawMean();
+      if (!Number.isFinite(mean)) return;
+      $('dbgBaseInput').value = Math.max(1, Math.round(mean));
+      setBaselineStatus('The average of the last 2 s. Press Save to Arduino to use it.');
+      refreshBaselineControls();
+    });
+    $('dbgBaseInput').addEventListener('input', refreshBaselineControls);
+    $('dbgBaseInput').addEventListener('keydown', event => { if (event.key === 'Enter') saveBaseline(); });
+    $('saveBaselineBtn').addEventListener('click', saveBaseline);
     function debugRow(row) {  // every data row from the Arduino
       // Before Wave(raw) existed, estimate the counts from Wave(V), which has 2 decimals (about ±1 count).
       debug.exact = Number.isFinite(row.raw);
@@ -1392,6 +1464,7 @@
       const now = performance.now();
       debug.history.push({ t: now, raw: debug.raw, pumping: row.pump === 'ON' || row.mode === 'INFL' });
       while (now - debug.history[0].t > (CHART_WINDOW_S + 1) * 1000) debug.history.shift();
+      refreshBaselineControls();
       if (!$('debug').hidden) showDebug(now);
     }
     function showDebug(now = performance.now()) {
